@@ -21,7 +21,7 @@ The tokenization is a single scan forward of a source file, resulting in a list 
 
 Each token has a context attached to it, with a start and stop position (start is inclusive, stop is exclusive). Each position indicates line number, col number and global char number of the token's first character. 
 
-Tokenization also groups tokens based on parentheses, braces or brackets. At this stage already braces are assumed to form dicts (with colons and commas), and brackets are assumed to form lists (with commas).
+Tokenization also groups tokens based on parentheses, braces or brackets. At this stage braces are already assumed to form dicts (with colons and commas), and brackets are already assumed to form lists (with commas).
 
 ### 2. parsing (syntax tree construction)
 
