@@ -303,11 +303,9 @@ func checkGitPackage(name *Word, raw *Dict, ew ErrorWriter) *String {
 	localPath := filepath.Join(home, ".cache", "casper", "pkg", url.Value())
 	localPath = filepath.Join(localPath, version.Value())
 
-	pkgConfig := filepath.Join(localPath, "package.json")
-
 	dst := NewString(localPath, raw.Context())
 
-	if !isFile(pkgConfig) {
+	if !isDir(dst.Value()) {
 		if err := FetchGitRepo(url, version, "", dst); err != nil {
 			ew.Add(err)
 			return nil
