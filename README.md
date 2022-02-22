@@ -28,17 +28,17 @@ Tokenization also groups tokens based on parentheses, braces or brackets. At thi
 1. import statements are parsed
 2. function statements are parsed
 3. function headers are built (type patterns)
-  i.   `::` operator
-  ii.  words and groups
-  iii. recurse nested patterns
+   1. `::` operator
+   2. words and groups
+   3. recurse nested patterns
 4. function expressions are built
-  i.   semicolons, assignments
-  ii.  groups
-  iii. pipes
-  iv.  function calls (essentially a list of expressions)
-  v.   remaining operators
-  vi.  remaining tokens 
-  vii. recurse expression parsing for nested expressions
+   1. semicolons, assignments
+   2. groups
+   3. pipes
+   4. function calls (essentially a list of expressions)
+   5. remaining operators
+   6. remaining tokens 
+   7. recurse expression parsing for nested expressions
 
 An important realization here is that expressions are essentially deferred values, so expressions respect the `Value` interface.
 
