@@ -59,7 +59,7 @@ File acts as a collection of functions. At this point non unique constructors th
 
 The program entry point is evaluated returning which should returning a final IO value.
 
-The `IO` value is `Run()` which essentially sets of a nested cascade of IO actions, interspersed with pure function calls.
+The `IO.Run()` is called. This starts a cascade of nested IO actions, interspersed with pure function calls.
 
 ### 5. serialization
 
