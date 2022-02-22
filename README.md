@@ -11,7 +11,7 @@ Build dependencies:
 * make
 * go
 
-## Compilation steps
+## Interpreter components
 
 ### 1. tokenization
 
