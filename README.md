@@ -27,11 +27,11 @@ Tokenization also groups tokens based on parentheses, braces or brackets. At thi
 
 1. import statements are parsed
 2. function statements are parsed
-3. function headers are built (type patterns)
+3. function headers are built (type patterns)\
   1. `::` operator
   2. words and groups
   3. recurse nested patterns
-4. function expressions are built
+4. function expressions are built\
   1. semicolons, assignments
   2. groups
   3. pipes
