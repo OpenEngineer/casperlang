@@ -131,7 +131,7 @@ func selectGitTag(url *String, tag *String, sshKey string) (gitplumbing.Referenc
 }
 
 func writeFile(fs billy.Filesystem, src string, dst string) error {
-	// TODO: only write the files that pass parser tests?
+	// XXX: only write the files that pass parser tests?
 	fIn, err := fs.Open(src)
 	if err != nil {
 		return err
@@ -175,7 +175,7 @@ func writeDir(fs billy.Filesystem, dirSrc string, dirDst string) error {
 			if err := writeDir(fs, src, dst); err != nil {
 				return err
 			}
-		} else {
+		} else if filepath.Ext(file.Name()) == ".cas" {
 			if err := writeFile(fs, src, dst); err != nil {
 				return err
 			}
@@ -183,6 +183,15 @@ func writeDir(fs billy.Filesystem, dirSrc string, dirDst string) error {
 	}
 
 	return nil
+}
+
+func hasPackageConf(fs billy.Filesystem) bool {
+	_, err := fs.Stat("/package.json")
+	if err == nil {
+		return true
+	} else {
+		return false
+	}
 }
 
 func writeWorktree(fs billy.Filesystem, dst string) error {
@@ -222,6 +231,10 @@ func cloneGitRef(url *String, ref gitplumbing.ReferenceName, sshKey string, dst 
 		Branch: ref,
 	}); err != nil {
 		return url.Context().Error("git fetch error (" + err.Error() + ")")
+	}
+
+	if !hasPackageConf(wt) {
+		return url.Context().Error("git repo doesn't contain have package.json")
 	}
 
 	if err := writeWorktree(wt, dst.Value()); err != nil {
