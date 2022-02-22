@@ -300,7 +300,7 @@ func checkGitPackage(name *Word, raw *Dict, ew ErrorWriter) *String {
 	home := os.Getenv("HOME")
 
 	// TODO: XDG-style paths for Windows/Mac
-	localPath := filepath.Join(home, ".cache", "casper", url.Value())
+	localPath := filepath.Join(home, ".cache", "casper", "pkg", url.Value())
 	localPath = filepath.Join(localPath, version.Value())
 
 	pkgConfig := filepath.Join(localPath, "package.json")
