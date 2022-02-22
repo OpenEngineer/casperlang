@@ -1,11 +1,15 @@
 Casperlang
 ==========
 
+This repository contains the golang code for the main interpreter of the Casper programming language.
+
+More information about *casper* can be found [here](https://www.openengineer.dev/casperlang.html).
+
+# Dev guide
+
 Build dependencies:
 * make
 * go
-
-# Dev guide
 
 ## Compilation steps
 
