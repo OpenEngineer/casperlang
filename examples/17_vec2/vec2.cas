@@ -1,0 +1,10 @@
+import "std"
+
+Vec2 a::Float b::Float = [a,b]
+
+mag a::Float b::Float = sqrt a*a + b*b
+mag (Vec2 a::Float b::Float) = mag a b
+mag (Vec2 a b) = mag a b
+mag [a::Float, b::Float] = mag a b
+
+main = showf (mag (Vec2 1.0 1.0)) | println

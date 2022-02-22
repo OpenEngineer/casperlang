@@ -1,0 +1,10 @@
+import "std"
+
+wget (Just url::String) = send (HttpReq "GET" url "")
+wget Nothing = Error "expected 1 arg"
+
+main =
+  args = readArgs;
+  data = wget args.1;
+  herr data;
+  echo data

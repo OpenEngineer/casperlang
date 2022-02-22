@@ -1,0 +1,10 @@
+import "std"
+
+cat (Just p::String) = read (File p)
+cat Nothing = Error "expected 1 arg"
+
+main =
+  args = readArgs;
+  data = cat args.1;
+  herr data;
+  echo data

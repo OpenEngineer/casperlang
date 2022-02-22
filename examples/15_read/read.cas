@@ -1,0 +1,8 @@
+import "std"
+
+main =
+  echo "what is your first name?\n";
+  firstName = readLine;
+  echo "what is your last name?\n";
+  lastName = readLine;
+  echo "hello ${firstName} ${lastName}\n"

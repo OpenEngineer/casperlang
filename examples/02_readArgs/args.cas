@@ -1,0 +1,5 @@
+import "std"
+
+main =
+  args = readArgs;
+  show args | \(echo $ + "\n");

@@ -1,0 +1,8 @@
+import "std"
+
+main = 
+  println "pick a number:";
+  iStr = readLine;
+  lst = map \($ + "bla") (["one", "two", "three"] + ["four", "five", "six"]);
+  lst.(toInt iStr) | println;
+  println (fold \($+$) "" lst)

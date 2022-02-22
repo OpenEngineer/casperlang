@@ -1,0 +1,4 @@
+sum l::([] Int) = fold \($ + $) 0 l
+
+main = 
+  sum [1,2,3,4] | show | \(echo $ + "\n")

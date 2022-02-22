@@ -1,0 +1,10 @@
+import "std"
+
+lst = [1,2,3,4,"asd",False]
+
+echoAll lst::[] = fold \($ ; $) void (map \(echo (show $) + "\n") lst)
+
+#fromJust (Just x::IO) = x
+#fromJust Nothing = void
+
+main = echoAll lst
