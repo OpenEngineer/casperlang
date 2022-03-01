@@ -6,16 +6,22 @@ import (
 )
 
 // v might've been reduced by a previous call to Eval
-func Run(v Value, scope Scope) {
+func Run(v Value) {
 	ew := NewErrorWriter()
 
-	v = v.Eval(scope, ew)
+	for {
+		c, ok := v.(Call)
+		if !ok || !ew.Empty() {
+			break
+		}
 
-	if v != nil {
+		v = c.Eval(ew)
+	}
+
+	if v != nil && ew.Empty() {
 		if !IsIO(v) {
-			ew.Add(v.Context().Error("expected IO, got " + v.Type().Dump()))
+			ew.Add(v.Context().Error("expected IO, got " + v.Dump()))
 		} else {
-
 			io := AssertIO(v)
 
 			v = io.Run()

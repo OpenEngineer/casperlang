@@ -4,5 +4,6 @@ type BuiltinFuncConfig struct {
 	Name        string
 	ArgTypes    []string
 	ArgPatterns []Pattern
-	Eval        func(self *BuiltinCall, scope Scope, ew ErrorWriter) Value
+	LinkReqs    []string
+	Eval        func(self *BuiltinCall, ew ErrorWriter) Value
 }

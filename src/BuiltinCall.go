@@ -1,25 +1,23 @@
 package main
 
-import "strings"
+import (
+	"strings"
+)
 
 type BuiltinCall struct {
-	ctx   Context
+	ValueData
 	name  string
 	args  []Value
-	type_ Type
-	eval  func(self *BuiltinCall, scope Scope, ew ErrorWriter) Value
+	links map[string][]Func
+	eval  func(self *BuiltinCall, ew ErrorWriter) Value
 }
 
-func NewBuiltinCall(name string, args []Value, type_ Type, eval func(self *BuiltinCall, scope Scope, ew ErrorWriter) Value, ctx Context) *BuiltinCall {
-	return &BuiltinCall{ctx, name, args, type_, eval}
+func NewBuiltinCall(name string, args []Value, links map[string][]Func, eval func(self *BuiltinCall, ew ErrorWriter) Value, ctx Context) *BuiltinCall {
+	return &BuiltinCall{newValueData(ctx), name, args, links, eval}
 }
 
-func (f *BuiltinCall) Context() Context {
-	return f.ctx
-}
-
-func (f *BuiltinCall) Type() Type {
-	return f.type_
+func (f *BuiltinCall) Name() string {
+	return f.name
 }
 
 func (f *BuiltinCall) Dump() string {
@@ -38,20 +36,45 @@ func (f *BuiltinCall) Dump() string {
 	return b.String()
 }
 
-func (f *BuiltinCall) Eval(scope Scope, ew ErrorWriter) Value {
-	return f.eval(f, scope, ew)
-}
-
-func (f *BuiltinCall) Update(type_ Type, ctx Context) Value {
-	return f.UpdateArgs(f.args, type_, ctx)
-}
-
-func (f *BuiltinCall) UpdateArgs(args []Value, type_ Type, ctx Context) *BuiltinCall {
-	return NewBuiltinCall(f.name, args, type_, f.eval, ctx)
-}
-
-func (f *BuiltinCall) CheckTypeNames(scope Scope, ew ErrorWriter) {
-	for _, arg := range f.args {
-		arg.CheckTypeNames(scope, ew)
+func (f *BuiltinCall) TypeName() string {
+	if isConstructorName(f.name) {
+		return f.name
+	} else {
+		return ""
 	}
+}
+
+func (f *BuiltinCall) NumArgs() int {
+	return len(f.args)
+}
+
+func (f *BuiltinCall) Args() []Value {
+	res := make([]Value, len(f.args))
+
+	for i, arg := range f.args {
+		res[i] = arg
+	}
+
+	return res
+}
+
+func (f *BuiltinCall) SetConstructors(cs []Call) Value {
+	return &BuiltinCall{ValueData{newTokenData(f.Context()), cs}, f.name, f.args, f.links, f.eval}
+}
+
+func (f *BuiltinCall) Link(scope Scope, ew ErrorWriter) Value {
+	return f
+}
+
+func (f *BuiltinCall) Eval(ew ErrorWriter) Value {
+	v := f.eval(f, ew)
+
+	cs := f.Constructors()
+	if isConstructorName(f.name) {
+		cs = append(make([]Call, 0), cs...)
+		cs = append(cs, f)
+	}
+
+	v = v.SetConstructors(cs)
+	return v
 }

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"sort"
 	"strings"
 )
@@ -79,47 +78,35 @@ func (h *FuncHeader) DumpArgs() string {
 	return b.String()
 }
 
-func (h *FuncHeader) CalcDistance(args []Value) []int {
+func (h *FuncHeader) Link(scope Scope, ew ErrorWriter) (*FuncHeader, *FuncScope) {
+	fnScope := NewFuncScope(scope)
+
+	args := []Pattern{}
+
+	for _, arg_ := range h.args {
+		arg := arg_.Link(fnScope, ew)
+		args = append(args, arg)
+	}
+
+	return &FuncHeader{h.name, args}, fnScope
+}
+
+func (h *FuncHeader) Destructure(args []Value, ew ErrorWriter) *Dispatched {
 	if len(args) != h.NumArgs() {
 		return nil
 	}
 
-	d := []int{}
+	disp := NewDispatched(args, h.name.Context())
 
 	for i, arg := range args {
-		p := h.args[i]
-		subD := p.CalcDistance(arg)
-		if subD == nil {
-			return nil
+		disp.UpdateArg(i, h.args[i].Destructure(arg, ew))
+
+		if disp.Failed() {
+			break
 		}
-
-		d = append(d, subD...)
 	}
 
-	return d
-}
-
-func (h *FuncHeader) DestructureArgs(scope Scope, args []Value, ctx Context, ew ErrorWriter) *FuncScope {
-	if len(args) != h.NumArgs() {
-		ew.Add(ctx.Error(fmt.Sprintf("expected %d args, got %d", h.NumArgs(), len(args))))
-		return nil
-	}
-
-	subScope := &FuncScope{scope, []*Word{}, []Func{}}
-
-	for i, arg := range args {
-		pat := h.args[i]
-
-		subScope = pat.Destructure(arg, subScope, ew)
-	}
-
-	return subScope
-}
-
-func (h *FuncHeader) CheckTypeNames(scope Scope, ew ErrorWriter) {
-	for _, arg := range h.args {
-		arg.CheckTypeNames(scope, ew)
-	}
+	return disp
 }
 
 func sortUniqStrings(lst []string) []string {

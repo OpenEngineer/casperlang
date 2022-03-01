@@ -2,56 +2,16 @@ package main
 
 import (
 	"fmt"
-	"os"
 	"reflect"
 )
 
 type IO struct {
-	TokenData
-	isDefErr bool
-	type_    *IOType // XXX: is the data type in *IOType still necessary?, can we just use PrimType("IO") instead?
-	Run      func() Value
+	ValueData
+	Run func() Value
 }
 
-func NewIO(innerType Value, Run func() Value, ctx Context) *IO {
-	return &IO{newTokenData(ctx), false, NewIOType(innerType), Run}
-}
-
-// the inner one should throw the first error
-func NewDeferredError(msg string, ctx Context) *IO {
-	return &IO{
-		newTokenData(ctx),
-		true,
-		nil,
-		func() Value {
-			fmt.Fprintf(os.Stdout, "%s\n", msg)
-			os.Exit(1)
-			return nil
-		},
-	}
-}
-
-func (v *IO) Dump() string {
-	if v.isDefErr {
-		return "<deferred-error>"
-	} else {
-		return v.type_.Dump()
-	}
-}
-
-func (v *IO) Type() Type {
-	return v.type_
-}
-
-func (v *IO) CheckTypeNames(scope Scope, ew ErrorWriter) {
-}
-
-func (v *IO) Eval(scope Scope, ew ErrorWriter) Value {
-	return v
-}
-
-func (v *IO) Update(type_ Type, ctx Context) Value {
-	return &IO{newTokenData(ctx), v.isDefErr, AssertIOType(type_), v.Run}
+func NewIO(Run func() Value, ctx Context) *IO {
+	return &IO{newValueData(ctx), Run}
 }
 
 func IsIO(v_ Value) bool {
@@ -64,15 +24,41 @@ func AssertIO(v_ Value) *IO {
 	if ok {
 		return v
 	} else {
+		if v, ok := v_.(*DisCall); ok {
+			fmt.Println(v.Name(), v.Dump())
+		}
+
 		panic("expected *IO, got " + reflect.TypeOf(v_).String())
 	}
 }
 
-func IsDeferredError(v_ Value) bool {
-	v, ok := v_.(*IO)
-	if ok {
-		return v.isDefErr
+func (v *IO) TypeName() string {
+	return "IO"
+}
+
+func (v *IO) Dump() string {
+	return "IO"
+}
+
+func (v *IO) Link(scope Scope, ew ErrorWriter) Value {
+	return &IO{ValueData{newTokenData(v.Context()), v.constructors}, v.Run}
+}
+
+func (v *IO) SetConstructors(cs []Call) Value {
+	return &IO{ValueData{newTokenData(v.Context()), cs}, v.Run}
+}
+
+func ResolveIO(res Value, ctx Context, ew ErrorWriter) Value {
+	concrete, _ := EvalUntil(res, func(tn string) bool {
+		return tn == "IO"
+	}, ew)
+
+	if concrete == nil || !ew.Empty() {
+		if ew.Empty() {
+			ew.Add(ctx.Error("expected IO return value"))
+		}
+		return nil
 	} else {
-		return false
+		return concrete
 	}
 }

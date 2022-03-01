@@ -63,6 +63,7 @@ func (fr *FuncBodyReader) finalizeFunc(ew ErrorWriter) *UserFunc {
 		return nil
 	} else {
 		fnBody := ParseExpr(ts, ew)
+		checkArgNames(fr.header.args, ew)
 		return NewUserFunc(fr.header.name, fr.header.args, fnBody, fr.header.name.Context())
 	}
 }

@@ -1,5 +1,7 @@
 package main
 
+import "strings"
+
 type Word struct {
 	TokenData
 	value string
@@ -47,16 +49,38 @@ func IsLowerCaseWord(t_ Token) bool {
 	}
 }
 
-func (w *Word) IsLowerCase() bool {
-	fl := w.Value()[0]
+func isLowerCase(s string) bool {
+	s = strings.TrimLeft(s, "_")
 
-	return fl == 95 || (fl >= 97 && fl <= 122)
+	if len(s) == 0 {
+		return true
+	} else {
+		fl := s[0]
+		return fl == 95 || (fl >= 97 && fl <= 122)
+	}
+}
+
+func (w *Word) IsLowerCase() bool {
+	return isLowerCase(w.Value())
+}
+
+func isUpperCase(s string) bool {
+	s = strings.TrimLeft(s, "_")
+	if len(s) == 0 {
+		return false
+	} else {
+		fl := s[0]
+
+		return (fl >= 65 && fl <= 90)
+	}
+}
+
+func isConstructorName(s string) bool {
+	return isUpperCase(s)
 }
 
 func (w *Word) IsUpperCase() bool {
-	fl := w.Value()[0]
-
-	return (fl >= 65 && fl <= 90)
+	return isUpperCase(w.Value())
 }
 
 func IsUpperCaseWord(t_ Token) bool {

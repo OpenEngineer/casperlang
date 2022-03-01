@@ -6,11 +6,10 @@ import (
 
 type UserFunc struct {
 	FuncData
-	file *File // referene to file where it is located (acts as scope)
 }
 
 func NewUserFunc(name *Word, args []Pattern, body Value, ctx Context) *UserFunc {
-	return &UserFunc{newFuncData(name, args, body, ctx), nil}
+	return &UserFunc{newFuncData(name, args, body, ctx)}
 }
 
 func IsUserFunc(t Token) bool {
@@ -28,10 +27,6 @@ func AssertUserFunc(t_ Token) *UserFunc {
 	}
 }
 
-func (v *UserFunc) Update(type_ Type, ctx Context) Value {
-	return &UserFunc{FuncData{newValueData(type_, ctx), v.head, v.body}, v.file}
-}
-
 func (f *UserFunc) Dump() string {
 	var b strings.Builder
 
@@ -44,36 +39,14 @@ func (f *UserFunc) Dump() string {
 	return b.String()
 }
 
-func (f *UserFunc) Eval(scope Scope, ew ErrorWriter) Value {
-	panic("can't eval *UserFunc, can only eval *AnonFunc")
+func (f *UserFunc) Link(scope Scope, ew ErrorWriter) Value {
+	return &UserFunc{f.linkArgs(scope, ew)}
 }
 
-func (f *UserFunc) CalcDistance(args []Value) []int {
-	return f.head.CalcDistance(args)
-}
-
-// XXX: should argScope be attached to args?
-func (f *UserFunc) Call(args []Value, argScope Scope, ctx Context, ew ErrorWriter) Value {
-	if f.file == nil {
-		panic("userfunc file not set")
+func (f *UserFunc) Dispatch(args []Value, ew ErrorWriter) *Dispatched {
+	d := f.FuncData.dispatch(args, ew)
+	if !d.Failed() {
+		d.SetFunc(f)
 	}
-
-	var scope Scope = f.file
-	res := f.call(scope, args, ctx, ew)
-	if res == nil {
-		return nil
-	} //else if IsDeferredError(res) {
-	//return res
-	//}
-
-	t := res.Type()
-	if f.IsConstructor() {
-		t = NewUserType(res.Type(), f.Name(), args, ctx)
-	}
-
-	return res.Update(t, ctx)
-}
-
-func (f *UserFunc) ListHeaderTypes() []string {
-	return f.head.ListTypes()
+	return d
 }

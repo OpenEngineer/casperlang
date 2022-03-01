@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"strings"
 )
 
@@ -13,13 +12,11 @@ type List struct {
 }
 
 func NewList(items []Value, ctx Context) *List {
-	t := NewListType(items, ctx)
-	return &List{newValueData(t, ctx), len(items), items}
+	return &List{newValueData(ctx), len(items), items}
 }
 
-// tuple is a literal list, can only be instantiated by parser
-func NewTuple(items []Value, ctx Context) *List {
-	return &List{newValueData(nil, ctx), len(items), items} // type is filled upon first eval
+func NewEmptyList(ctx Context) *List {
+	return NewList([]Value{}, ctx)
 }
 
 func IsList(t Token) bool {
@@ -37,17 +34,8 @@ func AssertList(t_ Token) *List {
 	}
 }
 
-func MergeLists(a_ Value, b_ Value, ctx Context) *List {
-	a := AssertList(a_)
-	b := AssertList(b_)
-
-	items := append(a.items, b.items...)
-
-	return NewList(items, ctx)
-}
-
-func (v *List) Update(type_ Type, ctx Context) Value {
-	return &List{newValueData(type_, ctx), v.length, v.items}
+func (v *List) TypeName() string {
+	return "[]"
 }
 
 func (t *List) Dump() string {
@@ -68,59 +56,35 @@ func (t *List) Dump() string {
 	return b.String()
 }
 
-func ParseList(gr *Brackets, ew ErrorWriter) *List {
-	if DEBUG_PARSER {
-		fmt.Printf("ParseList IN: %s\n", gr.Dump())
-	}
-
-	items := []Value{}
-
-	for _, field := range gr.values {
-		item := ParseExpr(field, ew)
-		items = append(items, item)
-	}
-
-	return NewTuple(items, gr.Context())
-}
-
-func (v *List) Eval(scope Scope, ew ErrorWriter) Value {
+func (v *List) Link(scope Scope, ew ErrorWriter) Value {
 	items := []Value{}
 
 	for _, item_ := range v.items {
-		item := item_.Eval(scope, ew)
-		if ew.Empty() {
-			items = append(items, item)
-		}
+		item := item_.Link(scope, ew)
+		items = append(items, item)
 	}
 
-	t := v.Type()
-	if t == nil {
-		t = NewTupleType(items, v.Context())
-	}
-
-	return &List{newValueData(t, v.Context()), len(items), items}
+	return NewList(items, v.Context())
 }
 
-func (v *List) Get(i int, ctx Context) Value {
+func (v *List) SetConstructors(cs []Call) Value {
+	return &List{ValueData{newTokenData(v.Context()), cs}, v.length, v.items}
+}
+
+func (v *List) Len() int {
+	return v.length
+}
+
+func (v *List) Get(i int) Value {
 	if i < 0 {
 		i += v.length
 	}
 
 	if i < 0 || i >= v.length {
-		return NewNothingValue(ctx)
+		return nil
 	}
 
-	return NewJustValue(v.items[i], ctx)
-}
-
-func (v *List) CheckTypeNames(scope Scope, ew ErrorWriter) {
-	for _, item := range v.items {
-		item.CheckTypeNames(scope, ew)
-	}
-}
-
-func (v *List) Len() int {
-	return v.length
+	return v.items[i]
 }
 
 func (v *List) Items() []Value {
@@ -133,56 +97,11 @@ func (v *List) Items() []Value {
 	return res
 }
 
-// can't sort on list directly because it's supposed to immutable
-type ListSorter struct {
-	ctx                  Context
-	insufficientTypeInfo bool
-	comp                 Func
-	items                []Value
-	scope                Scope // used to dispatch '<'
-	ew                   ErrorWriter
-}
+func MergeLists(a_ Value, b_ Value, ctx Context) *List {
+	a := AssertList(a_)
+	b := AssertList(b_)
 
-func NewListSorter(lst *List, scope Scope, comp Func, ew ErrorWriter, ctx Context) *ListSorter {
-	return &ListSorter{ctx, false, comp, lst.Items(), scope, ew}
-}
+	items := append(a.items, b.items...)
 
-func (s *ListSorter) Len() int {
-	return len(s.items)
-}
-
-func (s *ListSorter) Less(i, j int) bool {
-	if !s.ew.Empty() || s.insufficientTypeInfo {
-		return true
-	}
-
-	a := s.items[i]
-	b := s.items[j]
-	if a.Type() == nil || b.Type() == nil {
-		s.insufficientTypeInfo = true
-		return true
-	}
-
-	args := []Value{s.items[i], s.items[j]}
-
-	res := s.comp.Call(args, s.scope, s.ctx, s.ew)
-	if !s.ew.Empty() || res == nil {
-		fmt.Println(s.ew.Dump())
-		return true
-	} else if IsDeferredError(res) {
-		s.ew.Add(res.Context().Error("unable to dispatch comp (TODO: get rid of deferred error and do true lazy eval)"))
-		return true
-	}
-
-	lt, ok := GetBoolValue(res)
-	if ok {
-		return lt
-	} else {
-		s.insufficientTypeInfo = true
-		return true
-	}
-}
-
-func (s *ListSorter) Swap(i, j int) {
-	s.items[i], s.items[j] = s.items[j], s.items[i]
+	return NewList(items, ctx)
 }

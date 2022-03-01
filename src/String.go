@@ -11,15 +11,15 @@ type String struct {
 }
 
 func NewString(v string, ctx Context) *String {
-	return &String{newValueData(NewStringType(), ctx), v}
-}
-
-func (v *String) Update(type_ Type, ctx Context) Value {
-	return &String{newValueData(type_, ctx), v.value}
+	return &String{newValueData(ctx), v}
 }
 
 func (t *String) Value() string {
 	return t.value
+}
+
+func (v *String) TypeName() string {
+	return "String"
 }
 
 func (t *String) Dump() string {
@@ -80,8 +80,12 @@ func (t *String) ToWord() *Word {
 	return NewWord(t.Value(), t.Context())
 }
 
-func (v *String) Eval(scope Scope, ew ErrorWriter) Value {
+func (v *String) Link(scope Scope, ew ErrorWriter) Value {
 	return v
+}
+
+func (v *String) SetConstructors(cs []Call) Value {
+	return &String{ValueData{newTokenData(v.Context()), cs}, v.value}
 }
 
 // -1 if not found

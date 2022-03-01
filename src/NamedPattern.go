@@ -7,10 +7,6 @@ type NamedPattern struct {
 }
 
 func NewNamedPattern(name *Word, pattern Pattern, ctx Context) *NamedPattern {
-	if pattern == nil {
-		panic("pattern can't be nil")
-	}
-
 	return &NamedPattern{newTokenData(ctx), name, pattern}
 }
 
@@ -29,29 +25,36 @@ func AssertNamedPattern(t_ Token) *NamedPattern {
 	}
 }
 
+func (t *NamedPattern) Name() string {
+	return t.name.Value()
+}
+
 func (t *NamedPattern) Dump() string {
-	return t.name.Value() + "::" + t.pattern.Dump()
-}
-
-func (p *NamedPattern) CalcDistance(arg Value) []int {
-	return p.pattern.CalcDistance(arg)
-}
-
-func (p *NamedPattern) Destructure(arg Value, scope *FuncScope, ew ErrorWriter) *FuncScope {
-	scope = p.pattern.Destructure(arg, scope, ew)
-
-	scope, err := scope.add(p.name, arg)
-	if err != nil {
-		ew.Add(err)
-	}
-
-	return scope
-}
-
-func (p *NamedPattern) CheckTypeNames(scope Scope, ew ErrorWriter) {
-	p.pattern.CheckTypeNames(scope, ew)
+	return t.Name() + "::" + t.pattern.Dump()
 }
 
 func (p *NamedPattern) ListTypes() []string {
 	return p.pattern.ListTypes()
+}
+
+func (p *NamedPattern) ListNames() []*Word {
+	return append([]*Word{p.name}, p.pattern.ListNames()...)
+}
+
+func (p *NamedPattern) ListVars() []*Variable {
+	panic("should've been converted to a VarPattern")
+}
+
+func (p *NamedPattern) Link(scope *FuncScope, ew ErrorWriter) Pattern {
+	var_ := NewVariable(p.Name(), p.name.Context())
+
+	scope.Add(p.name, var_)
+
+	pattern := p.pattern.Link(scope, ew)
+
+	return NewVarPattern(var_, pattern, p.Context())
+}
+
+func (p *NamedPattern) Destructure(arg Value, ew ErrorWriter) *Destructured {
+	panic("should've been converted into a VarPattern")
 }

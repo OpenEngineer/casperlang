@@ -1,23 +1,23 @@
 package main
 
-import "strings"
+import (
+	"strings"
+)
 
 type Value interface {
 	Token
 
-	Type() Type
+	TypeName() string
 
-	CheckTypeNames(scope Scope, ew ErrorWriter)
+	Link(scope Scope, ew ErrorWriter) Value // returns a value that no longer depends on scopes
 
-	Eval(scope Scope, ew ErrorWriter) Value // updated type shouldn't change when calling this function
-
-	Update(type_ Type, ctx Context) Value
-	// TODO: serialization
+	Constructors() []Call
+	SetConstructors(cs []Call) Value
 }
 
 type ValueData struct {
 	TokenData
-	type_ Type
+	constructors []Call
 }
 
 func IsValue(t Token) bool {
@@ -34,42 +34,16 @@ func AssertValue(t_ Token) Value {
 	}
 }
 
-func newValueData(type_ Type, ctx Context) ValueData {
-	return ValueData{newTokenData(ctx), type_}
+func newValueData(ctx Context) ValueData {
+	return ValueData{newTokenData(ctx), make([]Call, 0)}
 }
 
-func NewValueData(type_ Type, ctx Context) *ValueData {
-	vd := newValueData(type_, ctx)
-
-	return &vd
+func (v *ValueData) Constructors() []Call {
+	return v.constructors
 }
 
-func NewGenericValue(type_ Type, ctx Context) *ValueData {
-	return NewValueData(type_, ctx)
-}
-
-func (v *ValueData) Update(type_ Type, ctx Context) Value {
-	return &ValueData{newTokenData(ctx), type_}
-}
-
-func (v *ValueData) Type() Type {
-	return v.type_
-}
-
-func (v *ValueData) Eval(scope Scope, ew ErrorWriter) Value {
-	return v
-}
-
-func (v *ValueData) Dump() string {
-	if v.type_ == nil {
-		return "<value>"
-	} else {
-		return "<value::" + v.type_.Dump() + ">"
-	}
-}
-
-func (v *ValueData) CheckTypeNames(scope Scope, ew ErrorWriter) {
-	return
+func (v *ValueData) SetConstructors(cs []Call) Value {
+	panic("SetConstructors() not (yet) defined")
 }
 
 func DumpValues(ts []Value) string {
@@ -83,4 +57,34 @@ func DumpValues(ts []Value) string {
 	}
 
 	return b.String()
+}
+
+func EvalUntil(arg Value, cond func(string) bool, ew ErrorWriter) (Value, Value) {
+	for _, c := range arg.Constructors() {
+		if cond(c.TypeName()) {
+			return arg, c
+		}
+	}
+
+	if arg.TypeName() == "All" {
+		return arg, arg
+	}
+
+	for {
+		if cond(arg.TypeName()) {
+			return arg, arg
+		} else {
+			call, ok := arg.(Call)
+			if !ok {
+				return nil, nil
+			}
+
+			// now eval some more
+			arg = call.Eval(ew)
+			if arg == nil {
+				return nil, nil
+			}
+
+		}
+	}
 }

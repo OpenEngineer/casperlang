@@ -1,50 +1,38 @@
 package main
 
-import "fmt"
-
 type GlobalScope struct {
-	entries map[string][]DispatchableFunc
+	db     map[string][]Func
+	linker *Linker
 }
 
-func (s *GlobalScope) Parent() Scope {
+func (s *GlobalScope) GetLocal(name string) *Variable {
 	return nil
 }
 
-func (s *GlobalScope) CollectFunctions(name string) []DispatchableFunc {
-	fns, ok := s.entries[name]
+func (s *GlobalScope) ListDispatchable(name string, numArgs int, ew ErrorWriter) []Func {
+	fns_, ok := s.db[name]
 	if ok {
+		fns := []Func{}
+
+		for _, fn_ := range fns_ {
+			if fn_.NumArgs() == numArgs || numArgs == -1 {
+				fn := s.linker.LinkFunc(fn_, s, ew)
+				fns = append(fns, fn)
+			}
+		}
+
 		return fns
 	} else {
-		return []DispatchableFunc{}
+		return []Func{}
 	}
 }
 
-func (s *GlobalScope) Dispatch(name *Word, args []Value, ew ErrorWriter) Func {
-	fns := s.CollectFunctions(name.Value())
-	if len(fns) == 0 {
-		fmt.Println("why are we here?")
-		ew.Add(name.Context().Error("\"" + name.Value() + "\" undefined"))
-		return nil
-	}
-
-	best, err := PickBest(fns, args, name.Context())
-
-	if err != nil {
-		ew.Add(err)
-		return nil
-	} else if best == nil {
-		return nil
-	} else {
-		return best
-	}
-}
-
-func registerBuiltinFuncs(db map[string][]DispatchableFunc, fns []BuiltinFuncConfig) {
+func registerBuiltinFuncs(db map[string][]Func, fns []BuiltinFuncConfig) {
 	for _, fnCfg := range fns {
 		name := fnCfg.Name
 		lst, ok := db[name]
 		if !ok {
-			lst = []DispatchableFunc{}
+			lst = []Func{}
 		}
 
 		lst = append(lst, NewBuiltinFunc(fnCfg))
@@ -53,13 +41,13 @@ func registerBuiltinFuncs(db map[string][]DispatchableFunc, fns []BuiltinFuncCon
 	}
 }
 
-func registerUserFuncs(db map[string][]DispatchableFunc, fns []*UserFunc) {
+func registerUserFuncs(db map[string][]Func, fns []*UserFunc) {
 	for _, fn := range fns {
 		name := fn.Name()
 
 		lst, ok := db[name]
 		if !ok {
-			lst = []DispatchableFunc{}
+			lst = []Func{}
 		}
 
 		lst = append(lst, fn)
@@ -68,34 +56,14 @@ func registerUserFuncs(db map[string][]DispatchableFunc, fns []*UserFunc) {
 	}
 }
 
-func fillCoreDB() map[string][]DispatchableFunc {
-	db := make(map[string][]DispatchableFunc)
+func fillCoreDB() map[string][]Func {
+	db := make(map[string][]Func)
 	registerBuiltinFuncs(db, builtinCoreFuncs)
 	registerBuiltinFuncs(db, builtinIOFuncs)
 	registerBuiltinFuncs(db, builtinMathFuncs)
 	return db
 }
 
-func FillGlobalScope() Scope {
-	db := make(map[string][]DispatchableFunc)
-
-	registerBuiltinFuncs(db, builtinCoreFuncs)
-	registerBuiltinFuncs(db, builtinIOFuncs)
-	registerBuiltinFuncs(db, builtinMathFuncs)
-
-	return &GlobalScope{db}
-}
-
-func fillJsonDB() map[string][]DispatchableFunc {
-	db := make(map[string][]DispatchableFunc)
-	registerBuiltinFuncs(db, builtinJSONFuncs)
-	return db
-}
-
-func FillJSONScope() Scope {
-	db := make(map[string][]DispatchableFunc)
-
-	registerBuiltinFuncs(db, builtinJSONFuncs)
-
-	return &GlobalScope{db}
+func NewGlobalScope(linker *Linker) *GlobalScope {
+	return &GlobalScope{fillCoreDB(), linker}
 }

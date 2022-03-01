@@ -1,0 +1,14 @@
+import "std"
+
+greeting = "hello world"
+file     = File "example_data.txt"
+
+# write greeting to file if you specify some arguments
+main = 
+  println "greeting: " + greeting;
+  println "Ints of greeting: " + (show (toInts greeting));
+  println "First letter of greeting: " + greeting.0;
+  "Num chars in greeting: " + (len greeting | show) | println;
+  args = readArgs;
+  err = if ((len args) > 1) (overwrite file greeting) (write file greeting);
+  herr err; void

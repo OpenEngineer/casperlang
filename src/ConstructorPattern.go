@@ -8,10 +8,11 @@ type ConstructorPattern struct {
 	TokenData
 	name *Word
 	args []Pattern
+	fn   Func
 }
 
 func NewConstructorPattern(name *Word, args []Pattern, ctx Context) *ConstructorPattern {
-	return &ConstructorPattern{newTokenData(ctx), name, args}
+	return &ConstructorPattern{newTokenData(ctx), name, args, nil}
 }
 
 func writeConstructorPattern(name *Word, args []Pattern) string {
@@ -30,80 +31,16 @@ func writeConstructorPattern(name *Word, args []Pattern) string {
 	return b.String()
 }
 
+func (t *ConstructorPattern) Name() string {
+	return t.name.Value()
+}
+
+func (t *ConstructorPattern) NumArgs() int {
+	return len(t.args)
+}
+
 func (t *ConstructorPattern) Dump() string {
 	return writeConstructorPattern(t.name, t.args)
-}
-
-func ParseConstructorPattern(p *Parens, ew ErrorWriter) *ConstructorPattern {
-	ctx := p.Context()
-
-	ts := p.content
-
-	t := ts[0]
-
-	var name *Word
-	switch {
-	case IsWord(t):
-		name = AssertWord(t)
-	case IsEmptyBraces(t):
-		name = NewWord("{}", t.Context())
-	case IsEmptyBrackets(t):
-		name = NewWord("[]", t.Context())
-	default:
-		ew.Add(t.Context().Error("invalid constructor pattern syntax"))
-		return nil
-	}
-
-	if name.Value() == "Int" ||
-		name.Value() == "Float" ||
-		name.Value() == "String" ||
-		name.Value() == "Any" ||
-		name.Value() == "IO" {
-		ew.Add(name.Context().Error("can't apply constructor pattern to \"" + name.Value() + "\""))
-		return nil
-	}
-
-	args := ParsePatterns(ts[1:], ew)
-
-	return NewConstructorPattern(name, args, ctx)
-}
-
-func (p *ConstructorPattern) CalcDistance(arg Value) []int {
-	return arg.Type().CalcConstructorDistance(p.name, p.args)
-}
-
-func (p *ConstructorPattern) Destructure(arg Value, scope *FuncScope, ew ErrorWriter) *FuncScope {
-	t := arg.Type()
-
-	d := t.CalcConstructorDistance(p.name, p.args)
-	if d == nil {
-		ew.Add(arg.Context().Error("unable to match pattern \"" + p.Dump() + "\""))
-		return scope
-	}
-
-	d0 := d[0]
-	for d0 > 0 {
-		t = t.Parent()
-		d0 -= 1
-	}
-
-	return t.DestructureConstructor(p.name, p.args, scope, ew)
-}
-
-func (p *ConstructorPattern) CheckTypeNames(scope Scope, ew ErrorWriter) {
-	name := p.name.Value()
-
-	if name == "[]" || name == "{}" {
-		return
-	}
-
-	if len(scope.CollectFunctions(name)) == 0 {
-		ew.Add(p.name.Context().Error("\"" + name + "\" undefined"))
-	}
-
-	for _, arg := range p.args {
-		arg.CheckTypeNames(scope, ew)
-	}
 }
 
 func (p *ConstructorPattern) ListTypes() []string {
@@ -114,4 +51,90 @@ func (p *ConstructorPattern) ListTypes() []string {
 	}
 
 	return lst
+}
+
+func (p *ConstructorPattern) ListNames() []*Word {
+	lst := []*Word{}
+
+	for _, arg := range p.args {
+		lst = append(lst, arg.ListNames()...)
+	}
+
+	return lst
+}
+
+func (p *ConstructorPattern) ListVars() []*Variable {
+	lst := []*Variable{}
+
+	for _, arg := range p.args {
+		lst = append(lst, arg.ListVars()...)
+	}
+
+	return lst
+}
+
+func (p *ConstructorPattern) Link(scope *FuncScope, ew ErrorWriter) Pattern {
+	name := p.Name()
+
+	fns := scope.ListDispatchable(name, p.NumArgs(), ew)
+	if len(fns) == 0 {
+		ew.Add(p.name.Context().Error("\"" + name + "\" undefined"))
+	} else if len(fns) > 1 {
+		ew.Add(p.name.Context().Error("multiple definitions of \"" + name + "\""))
+	}
+
+	args := []Pattern{}
+	for _, arg_ := range p.args {
+		arg := arg_.Link(scope, ew)
+		args = append(args, arg)
+	}
+
+	return &ConstructorPattern{newTokenData(p.Context()), p.name, args, fns[0]}
+}
+
+func (p *ConstructorPattern) Destructure(arg Value, ew ErrorWriter) *Destructured {
+	concrete, virt := EvalUntil(arg, func(tn string) bool {
+		return tn == p.Name()
+	}, ew)
+
+	distance := []int{len(virt.Constructors())}
+
+	if IsAll(concrete) {
+		return NewDestructured(concrete, distance)
+	}
+
+	call := AssertCall(concrete)
+
+	if call.NumArgs() != len(p.args) {
+		return NewDestructured(concrete, nil)
+	}
+
+	callArgs := call.Args()
+
+	for i, pat := range p.args {
+		d := pat.Destructure(callArgs[i], ew)
+		if d.Failed() {
+
+			if call.Name() == p.Name() {
+				return NewDestructured(
+					NewDisCall([]Func{p.fn}, callArgs, arg.Context()).SetConstructors(concrete.Constructors()),
+					nil,
+				)
+			} else {
+				return NewDestructured(concrete, nil)
+			}
+		}
+
+		distance = append(distance, d.distance...)
+		callArgs[i] = d.arg
+	}
+
+	if call.Name() == p.Name() {
+		return NewDestructured(
+			NewDisCall([]Func{p.fn}, callArgs, arg.Context()).SetConstructors(concrete.Constructors()),
+			distance,
+		)
+	} else {
+		return NewDestructured(concrete, distance)
+	}
 }

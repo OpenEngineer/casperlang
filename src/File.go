@@ -11,19 +11,29 @@ type File struct {
 	path     string
 	imports  []*String
 	imodules []*Module // direct refernce
-	fns      []*UserFunc
-	db       map[string][]DispatchableFunc
+	fns      []*ScopedFunc
+	db       map[string][]*ScopedFunc
+	linker   *Linker
 }
 
-func (f *File) Parent() Scope {
+func (f *File) GetLocal(name string) *Variable {
 	return nil
 }
 
-func (f *File) CollectFunctions(name string) []DispatchableFunc {
-	fns, ok := f.db[name]
+func (f *File) ListDispatchable(name string, nArgs int, ew ErrorWriter) []Func {
+	fns_, ok := f.db[name]
 	if !ok {
-		return []DispatchableFunc{}
+		return []Func{}
 	} else {
+		fns := []Func{}
+
+		for _, fn_ := range fns_ {
+			if fn_.NumArgs() == nArgs || nArgs == -1 {
+				fn := f.linker.LinkFunc(fn_.fn, fn_.scope, ew)
+				fns = append(fns, fn)
+			}
+		}
+
 		return fns
 	}
 }
@@ -38,8 +48,7 @@ func (f *File) AddImport(imp *String) {
 }
 
 func (f *File) AddFunc(fn *UserFunc) {
-	f.fns = append(f.fns, fn)
-	fn.file = f
+	f.fns = append(f.fns, NewScopedFunc(fn, f))
 }
 
 func DumpFile(f *File) string {
@@ -96,14 +105,6 @@ func (f *File) GetModules(p *Package, consumers []*Module, ew ErrorWriter) {
 	}
 }
 
-func (f *File) CheckTypeNames(ew ErrorWriter) {
-	for _, fn := range f.fns { // only the locally defined functions!
-		if fn.file == f {
-			fn.CheckTypeNames(f, ew)
-		}
-	}
-}
-
 func (f *File) ImportFuncs(ew ErrorWriter) {
 	for _, imodule := range f.imodules {
 		impFns := imodule.GetExportedFuncs()
@@ -111,7 +112,7 @@ func (f *File) ImportFuncs(ew ErrorWriter) {
 	}
 }
 
-func (f *File) PushMethods(fns []*UserFunc) {
+func (f *File) PushMethods(fns []*ScopedFunc) {
 Outer:
 	for _, fn := range fns {
 		for _, check := range f.fns {
@@ -124,38 +125,39 @@ Outer:
 	}
 }
 
-func (f *File) BuildDB(core map[string][]DispatchableFunc) {
-	f.db = make(map[string][]DispatchableFunc)
+func (f *File) BuildDB(gScope *GlobalScope) {
+	f.db = make(map[string][]*ScopedFunc)
 
-	for key, fn := range core {
-		f.db[key] = fn
+	for _, fn := range f.fns {
+		key := fn.Name()
+
+		lst, ok := f.db[key]
+		if ok {
+			f.db[key] = append(lst, fn)
+		} else {
+			f.db[key] = []*ScopedFunc{fn}
+		}
 	}
 
-	registerUserFuncs(f.db, f.fns)
+	for key, fns_ := range gScope.db {
+		fns := []*ScopedFunc{}
+
+		for _, fn := range fns_ {
+			fns = append(fns, NewScopedFunc(fn, gScope))
+		}
+
+		lst, ok := f.db[key]
+		if ok {
+			f.db[key] = append(lst, fns...)
+		} else {
+			f.db[key] = fns
+		}
+	}
+
 }
 
-func (s *File) Dispatch(name *Word, args []Value, ew ErrorWriter) Func {
-	if len(s.db) == 0 {
-		panic("empty db? for " + s.Path())
-	}
-
-	// the connected scopes are bad this way
-	fns := s.CollectFunctions(name.Value())
-
-	if len(fns) == 0 {
-		ew.Add(name.Context().Error("\"" + name.Value() + "\" undefined"))
-		return nil
-	}
-
-	best, err := PickBest(fns, args, name.Context())
-	if err != nil {
-		ew.Add(err)
-		return nil
-	} else if best == nil {
-		return nil
-	} else {
-		return best
-	}
+func (f *File) SetLinker(linker *Linker) {
+	f.linker = linker
 }
 
 func (f *File) DumpFuncs() string {

@@ -12,13 +12,11 @@ type Dict struct {
 }
 
 func NewDict(keys []*String, vals []Value, ctx Context) *Dict {
-	t := NewDictType(vals, ctx)
-
-	return &Dict{newValueData(t, ctx), len(keys), keys, vals}
+	return &Dict{newValueData(ctx), len(keys), keys, vals}
 }
 
-func NewStruct(keys []*String, vals []Value, ctx Context) *Dict {
-	return &Dict{newValueData(nil, ctx), len(keys), keys, vals}
+func NewEmptyDict(ctx Context) *Dict {
+	return &Dict{newValueData(ctx), 0, []*String{}, []Value{}}
 }
 
 func IsDict(t Token) bool {
@@ -33,6 +31,91 @@ func AssertDict(t_ Token) *Dict {
 	} else {
 		panic("expected *Dict")
 	}
+}
+
+func (t *Dict) TypeName() string {
+	return "{}"
+}
+
+func (t *Dict) Dump() string {
+	var b strings.Builder
+
+	b.WriteString("{")
+
+	for i, val := range t.vals {
+		key := t.keys[i]
+
+		b.WriteString(key.Dump())
+		b.WriteString(":")
+		b.WriteString(val.Dump())
+
+		if i < len(t.vals)-1 {
+			b.WriteString(",")
+		}
+	}
+
+	b.WriteString("}")
+
+	return b.String()
+}
+
+func (v *Dict) Link(scope Scope, ew ErrorWriter) Value {
+	vals := []Value{}
+
+	for _, val_ := range v.vals {
+		val := val_.Link(scope, ew)
+		vals = append(vals, val)
+	}
+
+	return NewDict(v.keys, vals, v.Context())
+}
+
+func (v *Dict) SetConstructors(cs []Call) Value {
+	return &Dict{ValueData{newTokenData(v.Context()), v.constructors}, v.length, v.keys, v.vals}
+}
+
+func (v *Dict) Len() int {
+	return v.length
+}
+
+func (v *Dict) GetStrict(s string) (Value, bool) {
+	for i := 0; i < v.length; i++ {
+		key := v.keys[i]
+		if key.Value() == s {
+			return v.vals[i], true
+		}
+	}
+
+	return nil, false
+}
+
+func (v *Dict) Get(s string) Value {
+	val, ok := v.GetStrict(s)
+	if ok {
+		return val
+	} else {
+		return nil
+	}
+}
+
+func (v *Dict) Keys() []*String {
+	// a copy
+	res := make([]*String, v.length)
+	for i := 0; i < v.length; i++ {
+		res[i] = v.keys[i]
+	}
+
+	return res
+}
+
+func (v *Dict) Values() []Value {
+	// a copy
+	res := make([]Value, v.length)
+	for i := 0; i < v.length; i++ {
+		res[i] = v.vals[i]
+	}
+
+	return res
 }
 
 // keys in a are preferred to keys in b
@@ -68,97 +151,4 @@ func MergeDicts(a_ Value, b_ Value, ctx Context) *Dict {
 	}
 
 	return NewDict(keys, vals, ctx)
-}
-
-func (v *Dict) Update(type_ Type, ctx Context) Value {
-	return &Dict{newValueData(type_, ctx), v.length, v.keys, v.vals}
-}
-
-func (t *Dict) Dump() string {
-	var b strings.Builder
-
-	b.WriteString("{")
-
-	for i, val := range t.vals {
-		key := t.keys[i]
-
-		b.WriteString(key.Dump())
-		b.WriteString(":")
-		b.WriteString(val.Dump())
-
-		if i < len(t.vals)-1 {
-			b.WriteString(",")
-		}
-	}
-
-	b.WriteString("}")
-
-	return b.String()
-}
-
-func ParseDict(gr *Braces, ew ErrorWriter) *Dict {
-	keys := []*String{}
-	vals := []Value{}
-
-	for i, field := range gr.vals {
-		val := ParseExpr(field, ew)
-		if val != nil {
-			keys = append(keys, gr.keys[i])
-			vals = append(vals, val)
-		}
-
-	}
-
-	return NewStruct(keys, vals, gr.Context())
-}
-
-// XXX: type is lost?
-func (v *Dict) Eval(scope Scope, ew ErrorWriter) Value {
-	vals := []Value{}
-
-	for _, val_ := range v.vals {
-		val := val_.Eval(scope, ew)
-		if val == nil {
-			return nil
-		}
-
-		vals = append(vals, val)
-	}
-
-	t := v.Type()
-	if t == nil {
-		t = NewStructType(v.keys, vals, v.Context())
-	}
-
-	return &Dict{newValueData(t, v.Context()), v.length, v.keys, vals}
-}
-
-func (v *Dict) CheckTypeNames(scope Scope, ew ErrorWriter) {
-	for _, val := range v.vals {
-		val.CheckTypeNames(scope, ew)
-	}
-}
-
-func (v *Dict) GetStrict(s string) (Value, bool) {
-	for i := 0; i < v.length; i++ {
-		key := v.keys[i]
-		if key.Value() == s {
-			return v.vals[i], true
-		}
-	}
-
-	return nil, false
-}
-
-func (v *Dict) Get(s string, ctx Context) Value {
-	val, ok := v.GetStrict(s)
-	if ok {
-		return NewJustValue(val, ctx)
-	} else {
-		return NewNothingValue(ctx)
-	}
-}
-
-func (v *Dict) Len() int {
-	return v.length
 }

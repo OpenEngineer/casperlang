@@ -168,6 +168,8 @@ func LoadEntryPackage(dir *String, ew ErrorWriter) *Package {
 		p.AddModule(m, ew)
 	}
 
+	linker := NewLinker()
+
 	// TODO: search for relevant package.json file
 
 	// link all files, modules and packages
@@ -188,11 +190,11 @@ func LoadEntryPackage(dir *String, ew ErrorWriter) *Package {
 
 	p.SyncMethods(ew)
 
-	core := fillCoreDB()
+	gScope := NewGlobalScope(linker)
 
-	p.BuildDBs(core)
+	p.BuildDBs(gScope)
 
-	p.CheckTypeNames(ew)
+	p.SetLinker(linker)
 
 	if !ew.Empty() {
 		return nil
@@ -396,23 +398,24 @@ func (p *Package) SyncMethods(ew ErrorWriter) {
 	}
 }
 
-func (p *Package) BuildDBs(core map[string][]DispatchableFunc) {
+func (p *Package) BuildDBs(gScope *GlobalScope) {
 	for _, dep := range p.deps {
-		dep.BuildDBs(core)
+		dep.BuildDBs(gScope)
 	}
 
 	for _, m := range p.modules {
-		m.BuildDBs(core)
+		m.BuildDBs(gScope)
 	}
 }
 
-func (p *Package) CheckTypeNames(ew ErrorWriter) {
+// check uniqueness and existence of the typenames
+func (p *Package) SetLinker(linker *Linker) {
 	for _, dep := range p.deps {
-		dep.CheckTypeNames(ew)
+		dep.SetLinker(linker)
 	}
 
 	for _, m := range p.modules {
-		m.CheckTypeNames(ew)
+		m.SetLinker(linker)
 	}
 }
 

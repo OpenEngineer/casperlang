@@ -12,6 +12,10 @@ func NewStructPattern(keys []*String, vals []Pattern, ctx Context) *StructPatter
 	return &StructPattern{newTokenData(ctx), keys, vals}
 }
 
+func (t *StructPattern) Name() string {
+	return "{}"
+}
+
 func (t *StructPattern) Dump() string {
 	var b strings.Builder
 
@@ -32,49 +36,6 @@ func (t *StructPattern) Dump() string {
 	return b.String()
 }
 
-func ParseStructPattern(gr *Braces, ew ErrorWriter) *StructPattern {
-	keys := []*String{}
-	vals := []Pattern{}
-
-	for i, ts := range gr.vals {
-		v := ParsePattern(ts, ew)
-		if v != nil {
-			vals = append(vals, v)
-			keys = append(keys, gr.keys[i])
-		}
-	}
-
-	return NewStructPattern(keys, vals, gr.Context())
-}
-
-func (p *StructPattern) CalcDistance(arg Value) []int {
-	return arg.Type().CalcStructDistance(p.keys, p.vals)
-}
-
-func (p *StructPattern) Destructure(arg Value, scope *FuncScope, ew ErrorWriter) *FuncScope {
-	t := arg.Type()
-
-	d := t.CalcStructDistance(p.keys, p.vals)
-	if d == nil {
-		ew.Add(arg.Context().Error("unable to match pattern \"" + p.Dump() + "\""))
-		return scope
-	}
-
-	d0 := d[0]
-	for d0 > 0 {
-		t = t.Parent()
-		d0 -= 1
-	}
-
-	return t.DestructureStruct(p.keys, p.vals, scope, ew)
-}
-
-func (p *StructPattern) CheckTypeNames(scope Scope, ew ErrorWriter) {
-	for _, val := range p.vals {
-		val.CheckTypeNames(scope, ew)
-	}
-}
-
 func (p *StructPattern) ListTypes() []string {
 	lst := []string{}
 
@@ -83,4 +44,91 @@ func (p *StructPattern) ListTypes() []string {
 	}
 
 	return lst
+}
+
+func (p *StructPattern) ListNames() []*Word {
+	lst := []*Word{}
+
+	for _, val := range p.vals {
+		lst = append(lst, val.ListNames()...)
+	}
+
+	return lst
+}
+
+func (p *StructPattern) ListVars() []*Variable {
+	lst := []*Variable{}
+
+	for _, val := range p.vals {
+		lst = append(lst, val.ListVars()...)
+	}
+
+	return lst
+}
+
+func (p *StructPattern) Link(scope *FuncScope, ew ErrorWriter) Pattern {
+	vals := []Pattern{}
+
+	for _, val_ := range p.vals {
+		val := val_.Link(scope, ew)
+		vals = append(vals, val)
+	}
+
+	return &StructPattern{newTokenData(p.Context()), p.keys, p.vals}
+}
+
+func (p *StructPattern) Destructure(arg Value, ew ErrorWriter) *Destructured {
+	concrete, virt := EvalUntil(arg, func(tn string) bool {
+		return tn == "{}"
+	}, ew)
+
+	distance := []int{len(virt.Constructors())}
+
+	if IsAll(concrete) {
+		return NewDestructured(concrete, distance)
+	}
+
+	dict := AssertDict(arg)
+
+	if dict.Len() < len(p.keys) {
+		return NewDestructured(concrete, nil)
+	}
+
+	dictVals := dict.Values() // should be a copy, so we can mutate
+	dictKeys := dict.Keys()
+
+	for i, pat := range p.vals {
+		key := p.keys[i]
+
+		found := false
+		for j, check := range dictKeys {
+			if check.Value() == key.Value() {
+				found = true
+
+				d := pat.Destructure(dictVals[j], ew)
+				if d.Failed() {
+					return NewDestructured(
+						NewDict(dictKeys, dictVals, arg.Context()).SetConstructors(concrete.Constructors()),
+						nil,
+					)
+				}
+
+				distance = append(distance, d.distance...)
+				dictVals[j] = d.arg
+
+				break
+			}
+		}
+
+		if !found {
+			return NewDestructured(
+				NewDict(dictKeys, dictVals, arg.Context()).SetConstructors(concrete.Constructors()),
+				nil,
+			)
+		}
+	}
+
+	concrete = NewDict(dictKeys, dictVals, arg.Context()).SetConstructors(concrete.Constructors())
+
+	return NewDestructured(concrete, distance)
 }

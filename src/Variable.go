@@ -1,58 +1,39 @@
 package main
 
-// mutable Value (and the only mutable one!, and no other point should values be mutated)
 type Variable struct {
 	ValueData
-	val Value
+	name string
+	data Value
 }
 
-func NewVariable(type_ Type, ctx Context) *Variable {
-	return &Variable{newValueData(type_, ctx), nil}
-}
-
-func IsVariable(v Value) bool {
-	_, ok := v.(*Variable)
-	return ok
-}
-
-func AssertVariable(v_ Value) *Variable {
-	v, ok := v_.(*Variable)
-	if ok {
-		return v
-	} else {
-		panic("expected *Variable")
-	}
-}
-
-// NOTE: this is the only mutating function in casperlang!
-func (v *Variable) SetValue(val Value) {
-	v.val = val
+func NewVariable(name string, ctx Context) *Variable {
+	return &Variable{newValueData(ctx), name, nil}
 }
 
 func (v *Variable) Dump() string {
-	if v.Type() == nil {
-		return "<var>"
+	return "<variable::" + v.name + ">"
+}
+
+func (v *Variable) TypeName() string {
+	if v.data == nil {
+		return ""
 	} else {
-		return "<var::" + v.Type().Dump() + ">"
+		return v.data.TypeName()
 	}
 }
 
-func (v *Variable) Eval(scope Scope, ew ErrorWriter) Value {
-	if v.val != nil {
-		return v.val
-	} else {
-		return v
-	}
+func (v *Variable) Name() string {
+	return v.name
 }
 
-// can't update variable by sending back new, because original context would get lost
-func (v *Variable) Update(type_ Type, ctx Context) Value {
-	v.type_ = type_
-	v.ctx = ctx
+func (v *Variable) Data() Value {
+	return v.data
+}
 
-	if v.val != nil {
-		v.val = v.val.Update(type_, ctx)
-	}
-
+func (v *Variable) Link(scope Scope, ew ErrorWriter) Value {
 	return v
+}
+
+func (v *Variable) SetData(val Value) {
+	v.data = val
 }

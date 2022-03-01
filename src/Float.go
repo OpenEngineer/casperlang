@@ -10,11 +10,7 @@ type Float struct {
 }
 
 func NewFloat(f float64, ctx Context) *Float {
-	return &Float{newValueData(NewFloatType(), ctx), f}
-}
-
-func (v *Float) Update(type_ Type, ctx Context) Value {
-	return &Float{newValueData(type_, ctx), v.f}
+	return &Float{newValueData(ctx), f}
 }
 
 func (t *Float) Dump() string {
@@ -23,6 +19,10 @@ func (t *Float) Dump() string {
 
 func (t *Float) Value() float64 {
 	return t.f
+}
+
+func (v *Float) TypeName() string {
+	return "Float"
 }
 
 func IsFloat(t Token) bool {
@@ -40,6 +40,10 @@ func AssertFloat(t_ Token) *Float {
 	}
 }
 
-func (v *Float) Eval(scope Scope, ew ErrorWriter) Value {
+func (v *Float) Link(scope Scope, ew ErrorWriter) Value {
 	return v
+}
+
+func (v *Float) SetConstructors(cs []Call) Value {
+	return &Float{ValueData{newTokenData(v.Context()), cs}, v.f}
 }

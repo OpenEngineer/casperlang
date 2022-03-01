@@ -11,6 +11,10 @@ func NewTuplePattern(items []Pattern, ctx Context) *TuplePattern {
 	return &TuplePattern{newTokenData(ctx), items}
 }
 
+func (t *TuplePattern) Name() string {
+	return "[]"
+}
+
 func (t *TuplePattern) Dump() string {
 	var b strings.Builder
 
@@ -27,47 +31,6 @@ func (t *TuplePattern) Dump() string {
 	return b.String()
 }
 
-func ParseTuplePattern(gr *Brackets, ew ErrorWriter) *TuplePattern {
-	items := []Pattern{}
-
-	for _, ts := range gr.values {
-		p := ParsePattern(ts, ew)
-		if p != nil {
-			items = append(items, p)
-		}
-	}
-
-	return NewTuplePattern(items, gr.Context())
-}
-
-func (p *TuplePattern) CalcDistance(arg Value) []int {
-	return arg.Type().CalcTupleDistance(p.items)
-}
-
-func (p *TuplePattern) Destructure(arg Value, scope *FuncScope, ew ErrorWriter) *FuncScope {
-	t := arg.Type()
-
-	d := t.CalcTupleDistance(p.items)
-	if d == nil {
-		ew.Add(arg.Context().Error("unable to match pattern \"" + p.Dump() + "\""))
-		return scope
-	}
-
-	d0 := d[0]
-	for d0 > 0 {
-		t = t.Parent()
-		d0 -= 1
-	}
-
-	return t.DestructureTuple(p.items, scope, ew)
-}
-
-func (p *TuplePattern) CheckTypeNames(scope Scope, ew ErrorWriter) {
-	for _, item := range p.items {
-		item.CheckTypeNames(scope, ew)
-	}
-}
-
 func (p *TuplePattern) ListTypes() []string {
 	lst := []string{}
 
@@ -76,4 +39,72 @@ func (p *TuplePattern) ListTypes() []string {
 	}
 
 	return lst
+}
+
+func (p *TuplePattern) ListNames() []*Word {
+	lst := []*Word{}
+
+	for _, item := range p.items {
+		lst = append(lst, item.ListNames()...)
+	}
+
+	return lst
+}
+
+func (p *TuplePattern) ListVars() []*Variable {
+	lst := []*Variable{}
+
+	for _, item := range p.items {
+		lst = append(lst, item.ListVars()...)
+	}
+
+	return lst
+}
+
+func (p *TuplePattern) Link(scope *FuncScope, ew ErrorWriter) Pattern {
+	items := []Pattern{}
+	for _, item_ := range p.items {
+		item := item_.Link(scope, ew)
+		items = append(items, item)
+	}
+
+	return &TuplePattern{newTokenData(p.Context()), items}
+}
+
+func (p *TuplePattern) Destructure(arg Value, ew ErrorWriter) *Destructured {
+	concrete, virt := EvalUntil(arg, func(tn string) bool {
+		return tn == "[]"
+	}, ew)
+
+	distance := []int{len(virt.Constructors())}
+
+	if IsAll(concrete) {
+		return NewDestructured(concrete, distance)
+	}
+
+	lst := AssertList(concrete)
+
+	if lst.Len() != len(p.items) {
+		return NewDestructured(concrete, nil)
+	}
+
+	lstItems := lst.Items()
+
+	for i, pat := range p.items {
+		d := pat.Destructure(lstItems[i], ew)
+
+		if d.Failed() {
+			return NewDestructured(
+				NewList(lstItems, arg.Context()).SetConstructors(concrete.Constructors()),
+				nil,
+			)
+		}
+
+		distance = append(distance, d.distance...)
+		lstItems[i] = d.arg
+	}
+
+	concrete = NewList(lstItems, arg.Context()).SetConstructors(concrete.Constructors())
+
+	return NewDestructured(concrete, distance)
 }

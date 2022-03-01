@@ -1,10 +1,14 @@
 package main
 
+import "strconv"
+
 type BuiltinFunc struct {
 	ValueData
 	name        string
 	argPatterns []Pattern
-	eval        func(self *BuiltinCall, scope Scope, ew ErrorWriter) Value
+	linkReqs    []string
+	links       map[string][]Func
+	eval        func(self *BuiltinCall, ew ErrorWriter) Value
 }
 
 func NewBuiltinFunc(cfg BuiltinFuncConfig) *BuiltinFunc {
@@ -15,53 +19,79 @@ func NewBuiltinFunc(cfg BuiltinFuncConfig) *BuiltinFunc {
 		argPatterns = []Pattern{}
 
 		for _, argType := range cfg.ArgTypes {
-			argPatterns = append(argPatterns, NewSimplePattern(NewBuiltinWord(argType)))
+			argPatterns = append(argPatterns, NewTypePattern(NewBuiltinWord(argType)))
 		}
 	}
 
 	eval := cfg.Eval
 
-	return &BuiltinFunc{newValueData(nil, NewBuiltinContext()), name, argPatterns, eval}
+	return &BuiltinFunc{
+		newValueData(NewBuiltinContext()),
+		name,
+		argPatterns,
+		cfg.LinkReqs,
+		make(map[string][]Func),
+		eval,
+	}
 }
 
-func (v *BuiltinFunc) Update(type_ Type, ctx Context) Value {
-	return &BuiltinFunc{newValueData(type_, ctx), v.name, v.argPatterns, v.eval}
-}
-
-func (f *BuiltinFunc) Name() string {
-	return f.name
-}
-
-func (f *BuiltinFunc) CalcDistance(args []Value) []int {
-	dummyHead := FuncHeader{NewBuiltinWord(f.name), f.argPatterns}
-
-	return dummyHead.CalcDistance(args)
-}
-
-func (f *BuiltinFunc) DumpHead() string {
-	dummyHead := FuncHeader{NewBuiltinWord(f.name), f.argPatterns}
-
-	return dummyHead.Dump()
-}
-
-func (f *BuiltinFunc) NumArgs() int {
-	return len(f.argPatterns)
+func (f *BuiltinFunc) TypeName() string {
+	return "\\" + strconv.Itoa(f.NumArgs())
 }
 
 func (f *BuiltinFunc) Dump() string {
 	return f.Name() + " <builtin>"
 }
 
-func (f *BuiltinFunc) Type() Type {
-	return NewFuncType(f.NumArgs())
+func (f *BuiltinFunc) Name() string {
+	return f.name
 }
 
-func (f *BuiltinFunc) Eval(scope Scope, ew ErrorWriter) Value {
-	panic("builtinfunc must be called before  eval")
+func (f *BuiltinFunc) NumArgs() int {
+	return len(f.argPatterns)
 }
 
-func (f *BuiltinFunc) Call(args []Value, argScope Scope, ctx Context, ew ErrorWriter) Value {
-	self := NewBuiltinCall(f.name, args, nil, f.eval, ctx)
+func (f *BuiltinFunc) header() *FuncHeader {
+	return &FuncHeader{NewBuiltinWord(f.name), f.argPatterns}
+}
 
-	return f.eval(self, argScope, ew)
+func (f *BuiltinFunc) DumpHead() string {
+	head := f.header()
+
+	return head.Dump()
+}
+
+func (f *BuiltinFunc) ListHeaderTypes() []string {
+	return []string{}
+}
+
+func (f *BuiltinFunc) Link(scope Scope, ew ErrorWriter) Value {
+	// opportunity to get some constructors
+	for _, k := range f.linkReqs {
+		fns := scope.ListDispatchable(k, -1, ew)
+		if len(fns) == 0 {
+			ew.Add(f.Context().Error("\"" + f.Name() + "\" undefined"))
+		}
+
+		f.links[k] = fns
+	}
+
+	return f
+}
+
+func (f *BuiltinFunc) Dispatch(args []Value, ew ErrorWriter) *Dispatched {
+	head := f.header()
+
+	d := head.Destructure(args, ew)
+	if d == nil {
+		return nil
+	}
+
+	d.SetFunc(f)
+	return d
+}
+
+// no: detach as regular, and get args from FuncScope
+func (f *BuiltinFunc) EvalRhs(d *Dispatched) Value {
+	return NewBuiltinCall(f.name, d.args, f.links, f.eval, d.ctx)
 }

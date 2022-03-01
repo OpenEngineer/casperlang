@@ -10,11 +10,7 @@ type Int struct {
 }
 
 func NewInt(i int64, ctx Context) *Int {
-	return &Int{newValueData(NewIntType(), ctx), i}
-}
-
-func (v *Int) Update(type_ Type, ctx Context) Value {
-	return &Int{newValueData(type_, ctx), v.i}
+	return &Int{newValueData(ctx), i}
 }
 
 func (t *Int) Dump() string {
@@ -23,6 +19,10 @@ func (t *Int) Dump() string {
 
 func (t *Int) Value() int64 {
 	return t.i
+}
+
+func (v *Int) TypeName() string {
+	return "Int"
 }
 
 func IsInt(t Token) bool {
@@ -39,7 +39,10 @@ func AssertInt(t_ Token) *Int {
 	}
 }
 
-// creates an immutable variable
-func (v *Int) Eval(scope Scope, ew ErrorWriter) Value {
+func (v *Int) Link(scope Scope, ew ErrorWriter) Value {
 	return v
+}
+
+func (v *Int) SetConstructors(cs []Call) Value {
+	return &Int{ValueData{newTokenData(v.Context()), cs}, v.i}
 }

@@ -18,7 +18,5 @@ func EvalJSON(s *Source, ew ErrorWriter) Value {
 		return nil
 	}
 
-	scope := FillJSONScope()
-
-	return v.Eval(scope, ew)
+	return v
 }

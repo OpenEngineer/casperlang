@@ -13,8 +13,8 @@ type Module struct {
 	dir      string
 	p        *Package
 	files    []*File
-	all      []*UserFunc
-	exported []*UserFunc
+	all      []*ScopedFunc
+	exported []*ScopedFunc
 }
 
 func LoadModule(p *Package, consumers []*Module, dir *String, ew ErrorWriter) *Module {
@@ -75,14 +75,14 @@ func isExportedName(name string) bool {
 }
 
 func (m *Module) MergeFuncs() {
-	allFns := []*UserFunc{}
+	allFns := []*ScopedFunc{}
 
 	for _, f := range m.files {
 		allFns = append(allFns, f.fns...)
 
 	}
 
-	exported := []*UserFunc{}
+	exported := []*ScopedFunc{}
 	for _, fn := range allFns {
 		if isExportedName(fn.Name()) {
 			exported = append(exported, fn)
@@ -91,7 +91,7 @@ func (m *Module) MergeFuncs() {
 
 	for _, f := range m.files {
 		// make a copy of the list, so it can be mutated by files without affecting other files
-		cpy := make([]*UserFunc, len(allFns))
+		cpy := make([]*ScopedFunc, len(allFns))
 		for i, fn := range allFns {
 			cpy[i] = fn
 		}
@@ -103,7 +103,7 @@ func (m *Module) MergeFuncs() {
 	m.exported = exported
 }
 
-func (m *Module) GetExportedFuncs() []*UserFunc {
+func (m *Module) GetExportedFuncs() []*ScopedFunc {
 	return m.exported
 }
 
@@ -140,7 +140,7 @@ func (m *Module) ListLocalTypes(ew ErrorWriter) []string {
 
 Outer:
 	for _, fn := range m.all {
-		if fn.IsConstructor() {
+		if isConstructorName(fn.Name()) {
 			for _, check := range lst {
 				if check == fn.Name() {
 					ew.Add(fn.Context().Error("multiple definitions of \"" + fn.Name() + "\""))
@@ -179,7 +179,7 @@ func (m *Module) SyncMethods(ew ErrorWriter) {
 	local := sortUniqStrings(m.ListLocalTypes(ew))
 
 	// only the exported methods attached to any Constructors can be pushed upwards
-	pushed := []*UserFunc{}
+	pushed := []*ScopedFunc{}
 
 	for _, fn := range m.exported {
 		fnTypes := fn.ListHeaderTypes()
@@ -195,7 +195,7 @@ func (m *Module) SyncMethods(ew ErrorWriter) {
 	}
 }
 
-func (m *Module) PushMethods(fns []*UserFunc) {
+func (m *Module) PushMethods(fns []*ScopedFunc) {
 	for _, f := range m.files {
 		f.PushMethods(fns)
 	}
@@ -206,15 +206,15 @@ func (m *Module) PushMethods(fns []*UserFunc) {
 	}
 }
 
-func (m *Module) BuildDBs(core map[string][]DispatchableFunc) {
+func (m *Module) BuildDBs(gScope *GlobalScope) {
 	for _, f := range m.files {
-		f.BuildDB(core)
+		f.BuildDB(gScope)
 	}
 }
 
-func (m *Module) CheckTypeNames(ew ErrorWriter) {
+func (m *Module) SetLinker(linker *Linker) {
 	for _, f := range m.files {
-		f.CheckTypeNames(ew)
+		f.SetLinker(linker)
 	}
 }
 
@@ -228,7 +228,10 @@ func (m *Module) RunEntryPoint(path string, ew ErrorWriter) {
 	}
 
 	name := "main"
-	fns := f.CollectFunctions(name)
+	fns := f.ListDispatchable(name, 0, ew)
+	if !ew.Empty() { // linking happens at the same time dispatching
+		return
+	}
 
 	// now filter by path
 	var fn Func
@@ -248,26 +251,18 @@ func (m *Module) RunEntryPoint(path string, ew ErrorWriter) {
 		return
 	}
 
-	if fn.NumArgs() != 0 {
-		ew.Add(errors.New(fmt.Sprintf("expected 0 arg for entry-point, \""+name+"\" has %d args", fn.NumArgs())))
-		return
-	}
+	f.linker.entry = fn
 
 	if DEBUG_PKG_LOADING {
 		fmt.Println("running entry point \"" + name + "\" in \"" + path + "\"")
 	}
 
-	retVal := fn.Call([]Value{}, f, fn.Context(), ew)
+	retVal := RunFunc(fn, []Value{}, ew, fn.Context())
 	if !ew.Empty() {
 		return
 	}
 
-	// Type == nil could be IO
-	//if retVal.Type() != nil && !IsIOType(retVal.Type()) {
-	//ew.Add(retVal.Context().Error("expected IO, got " + retVal.Dump()))
-	//}
-
-	Run(retVal, f)
+	Run(retVal)
 }
 
 func (m *Module) DumpFuncs() string {
