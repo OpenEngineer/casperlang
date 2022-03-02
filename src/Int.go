@@ -39,10 +39,14 @@ func AssertInt(t_ Token) *Int {
 	}
 }
 
+func (v *Int) SetConstructors(cs []Call) Value {
+	return &Int{ValueData{newTokenData(v.Context()), cs}, v.i}
+}
+
 func (v *Int) Link(scope Scope, ew ErrorWriter) Value {
 	return v
 }
 
-func (v *Int) SetConstructors(cs []Call) Value {
-	return &Int{ValueData{newTokenData(v.Context()), cs}, v.i}
+func (v *Int) Eval(stack *Stack, ew ErrorWriter) Value {
+	return v
 }

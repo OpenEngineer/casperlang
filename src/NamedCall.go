@@ -30,7 +30,11 @@ func (v *NamedCall) Link(scope Scope, ew ErrorWriter) Value {
 	if local != nil {
 		args := v.linkArgs(scope, ew)
 
-		return NewVarCall(local, args, v.name.Context())
+		if len(args) == 0 {
+			return local
+		} else {
+			return NewBlindCall(append([]Value{local}, args...), v.name.Context())
+		}
 	} else {
 		fns := scope.ListDispatchable(v.Name(), v.NumArgs(), ew)
 		if len(fns) == 0 {

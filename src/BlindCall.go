@@ -10,11 +10,11 @@ type BlindCall struct {
 	fn Value // evaluate this until TypeName begins with '\'
 }
 
-func NewBlindCall(args []Value) Call {
+func NewBlindCall(args []Value, ctx Context) Call {
 	fn := args[0]
 	args = args[1:]
 
-	return &BlindCall{newCallData(args, fn.Context()), fn}
+	return &BlindCall{newCallData(args, ctx), fn}
 }
 
 func (v *BlindCall) TypeName() string {
@@ -40,8 +40,8 @@ func (v *BlindCall) SetConstructors(cs []Call) Value {
 	return &BlindCall{v.setConstructors(cs), v.fn}
 }
 
-func (t *BlindCall) dispatch(ew ErrorWriter) *Dispatched {
-	fn_, _ := EvalUntil(t.fn, func(tn string) bool {
+func (t *BlindCall) Eval(stack *Stack, ew ErrorWriter) Value {
+	fn_, _ := EvalUntil(t.fn, stack, func(tn string) bool {
 		return strings.HasPrefix(tn, "\\")
 	}, ew)
 
@@ -50,32 +50,15 @@ func (t *BlindCall) dispatch(ew ErrorWriter) *Dispatched {
 		return nil
 	}
 
-	t.fn = fn_
+	fn := AssertAnonFunc(fn_)
 
-	fn := AssertFunc(t.fn)
 	if fn.NumArgs() != t.NumArgs() {
 		ew.Add(t.Context().Error(fmt.Sprintf("expected function with %d args, got %s", t.NumArgs(), fn.NumArgs())))
 		return nil
 	}
 
-	d := fn.Dispatch(t.args, ew)
+	v := fn.EvalRhs(t.args, stack, ew)
+	v = v.SetConstructors(t.Constructors())
 
-	if d == nil {
-		ew.Add(t.Context().Error("unable to destructure"))
-		return nil
-	}
-
-	return d
-}
-
-func (t *BlindCall) Eval(ew ErrorWriter) Value {
-	d := t.dispatch(ew)
-	if d == nil {
-		return nil
-	} else {
-		v := d.Eval()
-		v = v.SetConstructors(t.Constructors())
-
-		return v
-	}
+	return v
 }

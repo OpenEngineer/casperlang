@@ -3,7 +3,7 @@ package main
 import "strings"
 
 type Func interface {
-	Value
+	Token
 
 	Name() string // empty for anonymous functions
 	NumArgs() int
@@ -11,7 +11,8 @@ type Func interface {
 	ListHeaderTypes() []string
 
 	// args should be detached at this point
-	Dispatch(args []Value, ew ErrorWriter) *Dispatched
+	Dispatch(args []Value, stack *Stack, ew ErrorWriter) *Dispatched
+	Link(scope Scope, ew ErrorWriter) Func
 
 	EvalRhs(d *Dispatched) Value
 }

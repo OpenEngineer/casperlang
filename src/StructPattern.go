@@ -77,25 +77,25 @@ func (p *StructPattern) Link(scope *FuncScope, ew ErrorWriter) Pattern {
 	return &StructPattern{newTokenData(p.Context()), p.keys, p.vals}
 }
 
-func (p *StructPattern) Destructure(arg Value, ew ErrorWriter) *Destructured {
-	concrete, virt := EvalUntil(arg, func(tn string) bool {
+func (p *StructPattern) Destructure(arg Value, stack *Stack, ew ErrorWriter) *Destructured {
+	concrete, virt := EvalUntil(arg, stack, func(tn string) bool {
 		return tn == "{}"
 	}, ew)
 
 	if concrete == nil {
-		return NewDestructured(arg, nil)
+		return NewDestructured(arg, nil, nil)
 	}
 
 	distance := []int{len(virt.Constructors())}
 
 	if IsAll(concrete) {
-		return NewDestructured(concrete, distance)
+		return NewDestructured(concrete, distance, stack)
 	}
 
 	dict := AssertDict(arg)
 
 	if dict.Len() < len(p.keys) {
-		return NewDestructured(concrete, nil)
+		return NewDestructured(concrete, nil, nil)
 	}
 
 	dictVals := dict.Values() // should be a copy, so we can mutate
@@ -109,10 +109,11 @@ func (p *StructPattern) Destructure(arg Value, ew ErrorWriter) *Destructured {
 			if check.Value() == key.Value() {
 				found = true
 
-				d := pat.Destructure(dictVals[j], ew)
+				d := pat.Destructure(dictVals[j], stack, ew)
 				if d.Failed() {
 					return NewDestructured(
 						NewDict(dictKeys, dictVals, arg.Context()).SetConstructors(concrete.Constructors()),
+						nil,
 						nil,
 					)
 				}
@@ -128,11 +129,12 @@ func (p *StructPattern) Destructure(arg Value, ew ErrorWriter) *Destructured {
 			return NewDestructured(
 				NewDict(dictKeys, dictVals, arg.Context()).SetConstructors(concrete.Constructors()),
 				nil,
+				nil,
 			)
 		}
 	}
 
 	concrete = NewDict(dictKeys, dictVals, arg.Context()).SetConstructors(concrete.Constructors())
 
-	return NewDestructured(concrete, distance)
+	return NewDestructured(concrete, distance, stack)
 }

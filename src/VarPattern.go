@@ -30,8 +30,8 @@ func (p *VarPattern) Link(scope *FuncScope, ew ErrorWriter) Pattern {
 	return p
 }
 
-func (p *VarPattern) Destructure(arg Value, ew ErrorWriter) *Destructured {
-	d := p.pattern.Destructure(arg, ew)
+func (p *VarPattern) Destructure(arg Value, stack *Stack, ew ErrorWriter) *Destructured {
+	d := p.pattern.Destructure(arg, stack, ew)
 
 	if d.arg == nil {
 		panic("returned arg can't be nil")

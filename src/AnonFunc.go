@@ -4,6 +4,7 @@ import (
 	"strings"
 )
 
+// implements both Func and Value interfaces
 type AnonFunc struct {
 	FuncData
 }
@@ -18,6 +19,15 @@ func NewSingleArgAnonFunc(arg Pattern, body Value, ctx Context) *AnonFunc {
 
 func NewNoArgAnonFunc(body Value, ctx Context) *AnonFunc {
 	return NewAnonFunc([]Pattern{}, body, ctx)
+}
+
+func AssertAnonFunc(t Value) *AnonFunc {
+	f, ok := t.(*AnonFunc)
+	if ok {
+		return f
+	} else {
+		panic("expected *AnonFunc")
+	}
 }
 
 func (f *AnonFunc) Dump() string {
@@ -35,16 +45,25 @@ func (f *AnonFunc) Dump() string {
 	return b.String()
 }
 
-func (f *AnonFunc) Link(scope Scope, ew ErrorWriter) Value {
-	return &AnonFunc{f.linkArgs(scope, ew)}
-}
-
 func (f *AnonFunc) SetConstructors(cs []Call) Value {
 	return &AnonFunc{f.setConstructors(cs)}
 }
 
-func (f *AnonFunc) Dispatch(args []Value, ew ErrorWriter) *Dispatched {
-	d := f.FuncData.dispatch(args, ew)
-	d.SetFunc(f)
-	return d
+func (f *AnonFunc) Link(scope Scope, ew ErrorWriter) Value {
+	return &AnonFunc{f.linkArgs(scope, ew)}
+}
+
+func (f *AnonFunc) Eval(stack *Stack, ew ErrorWriter) Value {
+	return &AnonFunc{f.wrapRhs(stack)}
+}
+
+func (f *AnonFunc) EvalRhs(args []Value, stack *Stack, ew ErrorWriter) Value {
+	d := f.FuncData.dispatch(args, stack, ew)
+
+	if d == nil {
+		ew.Add(t.Context().Error("unable to destructure"))
+		return nil
+	}
+
+	return f.FuncData.EvalRhs(d)
 }

@@ -342,7 +342,7 @@ var builtinCoreFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 
 			oldItems := lst.Items()
 
-			// XXX: in the lazy case this doesn't work because a the variables are overwritten!
+			// XXX: in the lazy case this doesn't work because a the variables are overwritten
 			for _, oldItem := range oldItems {
 				if acc == nil {
 					acc = oldItem

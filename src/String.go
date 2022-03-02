@@ -80,12 +80,16 @@ func (t *String) ToWord() *Word {
 	return NewWord(t.Value(), t.Context())
 }
 
+func (v *String) SetConstructors(cs []Call) Value {
+	return &String{ValueData{newTokenData(v.Context()), cs}, v.value}
+}
+
 func (v *String) Link(scope Scope, ew ErrorWriter) Value {
 	return v
 }
 
-func (v *String) SetConstructors(cs []Call) Value {
-	return &String{ValueData{newTokenData(v.Context()), cs}, v.value}
+func (v *String) Eval(stack *Stack, ew ErrorWriter) Value {
+	return v
 }
 
 // -1 if not found

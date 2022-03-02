@@ -40,12 +40,16 @@ func (v *IO) Dump() string {
 	return "IO"
 }
 
-func (v *IO) Link(scope Scope, ew ErrorWriter) Value {
-	return &IO{ValueData{newTokenData(v.Context()), v.constructors}, v.Run}
-}
-
 func (v *IO) SetConstructors(cs []Call) Value {
 	return &IO{ValueData{newTokenData(v.Context()), cs}, v.Run}
+}
+
+func (v *IO) Link(scope Scope, ew ErrorWriter) Value {
+	return v
+}
+
+func (v *IO) Eval(stack *Stack, ew ErrorWriter) Value {
+	return v
 }
 
 func ResolveIO(res Value, ctx Context, ew ErrorWriter) Value {

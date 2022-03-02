@@ -24,7 +24,7 @@ func (f *UserFunc) Dump() string {
 	return b.String()
 }
 
-func (f *UserFunc) Link(scope Scope, ew ErrorWriter) Value {
+func (f *UserFunc) Link(scope Scope, ew ErrorWriter) Func {
 	return &UserFunc{f.linkArgs(scope, ew)}
 }
 

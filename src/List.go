@@ -56,17 +56,6 @@ func (t *List) Dump() string {
 	return b.String()
 }
 
-func (v *List) Link(scope Scope, ew ErrorWriter) Value {
-	items := []Value{}
-
-	for _, item_ := range v.items {
-		item := item_.Link(scope, ew)
-		items = append(items, item)
-	}
-
-	return NewList(items, v.Context())
-}
-
 func (v *List) SetConstructors(cs []Call) Value {
 	return &List{ValueData{newTokenData(v.Context()), cs}, v.length, v.items}
 }
@@ -95,6 +84,28 @@ func (v *List) Items() []Value {
 	}
 
 	return res
+}
+
+func (v *List) Link(scope Scope, ew ErrorWriter) Value {
+	items := []Value{}
+
+	for _, item_ := range v.items {
+		item := item_.Link(scope, ew)
+		items = append(items, item)
+	}
+
+	return NewList(items, v.Context())
+}
+
+func (v *List) Eval(stack *Stack, ew ErrorWriter) Value {
+	items := []Value{}
+
+	for _, item_ := range v.items {
+		item := item_.Link(stack, ew)
+		items = append(items, item)
+	}
+
+	return NewList(items, v.Context())
 }
 
 func MergeLists(a_ Value, b_ Value, ctx Context) *List {

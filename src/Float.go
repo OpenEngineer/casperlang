@@ -40,10 +40,14 @@ func AssertFloat(t_ Token) *Float {
 	}
 }
 
+func (v *Float) SetConstructors(cs []Call) Value {
+	return &Float{ValueData{newTokenData(v.Context()), cs}, v.f}
+}
+
 func (v *Float) Link(scope Scope, ew ErrorWriter) Value {
 	return v
 }
 
-func (v *Float) SetConstructors(cs []Call) Value {
-	return &Float{ValueData{newTokenData(v.Context()), cs}, v.f}
+func (v *Float) Eval(stack *Stack, ew ErrorWriter) Value {
+	return v
 }

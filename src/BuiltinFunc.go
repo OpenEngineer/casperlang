@@ -1,7 +1,5 @@
 package main
 
-import "strconv"
-
 type BuiltinFunc struct {
 	ValueData
 	name        string
@@ -34,10 +32,6 @@ func NewBuiltinFunc(cfg BuiltinFuncConfig) *BuiltinFunc {
 	}
 }
 
-func (f *BuiltinFunc) TypeName() string {
-	return "\\" + strconv.Itoa(f.NumArgs())
-}
-
 func (f *BuiltinFunc) Dump() string {
 	return f.DumpHead() + " = <builtin>"
 }
@@ -64,7 +58,7 @@ func (f *BuiltinFunc) ListHeaderTypes() []string {
 	return []string{}
 }
 
-func (f *BuiltinFunc) Link(scope Scope, ew ErrorWriter) Value {
+func (f *BuiltinFunc) Link(scope Scope, ew ErrorWriter) Func {
 	// opportunity to get some constructors
 	for _, k := range f.linkReqs {
 		fns := scope.ListDispatchable(k, -1, ew)
@@ -78,10 +72,10 @@ func (f *BuiltinFunc) Link(scope Scope, ew ErrorWriter) Value {
 	return f
 }
 
-func (f *BuiltinFunc) Dispatch(args []Value, ew ErrorWriter) *Dispatched {
+func (f *BuiltinFunc) Dispatch(args []Value, stack *Stack, ew ErrorWriter) *Dispatched {
 	head := f.header()
 
-	d := head.Destructure(args, ew)
+	d := head.Destructure(args, stack, ew)
 
 	d.SetFunc(f)
 
@@ -90,5 +84,6 @@ func (f *BuiltinFunc) Dispatch(args []Value, ew ErrorWriter) *Dispatched {
 
 // no: detach as regular, and get args from FuncScope
 func (f *BuiltinFunc) EvalRhs(d *Dispatched) Value {
+	// stack is irrelevant
 	return NewBuiltinCall(f.name, d.args, f.links, f.eval, d.ctx)
 }

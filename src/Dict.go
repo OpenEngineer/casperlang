@@ -59,17 +59,6 @@ func (t *Dict) Dump() string {
 	return b.String()
 }
 
-func (v *Dict) Link(scope Scope, ew ErrorWriter) Value {
-	vals := []Value{}
-
-	for _, val_ := range v.vals {
-		val := val_.Link(scope, ew)
-		vals = append(vals, val)
-	}
-
-	return NewDict(v.keys, vals, v.Context())
-}
-
 func (v *Dict) SetConstructors(cs []Call) Value {
 	return &Dict{ValueData{newTokenData(v.Context()), v.constructors}, v.length, v.keys, v.vals}
 }
@@ -116,6 +105,28 @@ func (v *Dict) Values() []Value {
 	}
 
 	return res
+}
+
+func (v *Dict) Link(scope Scope, ew ErrorWriter) Value {
+	vals := []Value{}
+
+	for _, val_ := range v.vals {
+		val := val_.Link(scope, ew)
+		vals = append(vals, val)
+	}
+
+	return NewDict(v.keys, vals, v.Context())
+}
+
+func (v *Dict) Eval(stack *Stack, ew ErrorWriter) Value {
+	vals := []Value{}
+
+	for _, val_ := range v.vals {
+		val := val_.Eval(stack, ew)
+		vals = append(vals, val)
+	}
+
+	return NewDict(v.keys, vals, v.Context())
 }
 
 // keys in a are preferred to keys in b

@@ -71,35 +71,36 @@ func (p *TuplePattern) Link(scope *FuncScope, ew ErrorWriter) Pattern {
 	return &TuplePattern{newTokenData(p.Context()), items}
 }
 
-func (p *TuplePattern) Destructure(arg Value, ew ErrorWriter) *Destructured {
-	concrete, virt := EvalUntil(arg, func(tn string) bool {
+func (p *TuplePattern) Destructure(arg Value, stack *Stack, ew ErrorWriter) *Destructured {
+	concrete, virt := EvalUntil(arg, stack, func(tn string) bool {
 		return tn == "[]"
 	}, ew)
 
 	if concrete == nil {
-		return NewDestructured(arg, nil)
+		return NewDestructured(arg, nil, nil)
 	}
 
 	distance := []int{len(virt.Constructors())}
 
 	if IsAll(concrete) {
-		return NewDestructured(concrete, distance)
+		return NewDestructured(concrete, distance, stack)
 	}
 
 	lst := AssertList(concrete)
 
 	if lst.Len() != len(p.items) {
-		return NewDestructured(concrete, nil)
+		return NewDestructured(concrete, nil, nil)
 	}
 
 	lstItems := lst.Items()
 
 	for i, pat := range p.items {
-		d := pat.Destructure(lstItems[i], ew)
+		d := pat.Destructure(lstItems[i], stack, ew)
 
 		if d.Failed() {
 			return NewDestructured(
 				NewList(lstItems, arg.Context()).SetConstructors(concrete.Constructors()),
+				nil,
 				nil,
 			)
 		}
@@ -110,5 +111,5 @@ func (p *TuplePattern) Destructure(arg Value, ew ErrorWriter) *Destructured {
 
 	concrete = NewList(lstItems, arg.Context()).SetConstructors(concrete.Constructors())
 
-	return NewDestructured(concrete, distance)
+	return NewDestructured(concrete, distance, stack)
 }

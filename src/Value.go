@@ -9,11 +9,11 @@ type Value interface {
 	Token
 
 	TypeName() string
-
-	Link(scope Scope, ew ErrorWriter) Value // returns a value that no longer depends on scopes
-
 	Constructors() []Call
 	SetConstructors(cs []Call) Value
+
+	Link(scope Scope, ew ErrorWriter) Value  // returns a value that no longer depends on scopes
+	Eval(stack *Stack, ew ErrorWriter) Value // non-lazy for dict and list, lazy for calls (returning wrapped rhs)
 }
 
 type ValueData struct {

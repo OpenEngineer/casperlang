@@ -6,17 +6,18 @@ type Dispatched struct {
 	distance []int
 	args     []Value
 
-	vars []*Variable
-	data []Value
+	stack *Stack
+	vars  []*Variable
+	data  []Value
 }
 
-func NewDispatched(args []Value, ctx Context) *Dispatched {
+func NewDispatched(args []Value, parent *Stack, ctx Context) *Dispatched {
 	cpy := make([]Value, len(args))
 	for i, arg := range args {
 		cpy[i] = arg
 	}
 
-	return &Dispatched{ctx, nil, []int{}, args, []*Variable{}, []Value{}}
+	return &Dispatched{ctx, nil, []int{}, args, NewStack(parent)}
 }
 
 func (d *Dispatched) UpdateArg(i int, des *Destructured) {
@@ -28,8 +29,7 @@ func (d *Dispatched) UpdateArg(i int, des *Destructured) {
 
 	if !d.Failed() && !des.Failed() {
 		d.distance = append(d.distance, des.distance...)
-		d.vars = append(d.vars, des.vars...)
-		d.data = append(d.data, des.data...)
+		d.stack.Extend(des.stack)
 	} else {
 		d.distance = nil
 	}

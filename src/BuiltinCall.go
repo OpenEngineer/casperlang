@@ -66,7 +66,7 @@ func (f *BuiltinCall) Link(scope Scope, ew ErrorWriter) Value {
 	return f
 }
 
-func (f *BuiltinCall) Eval(ew ErrorWriter) Value {
+func (f *BuiltinCall) Eval(_ *Stack, ew ErrorWriter) Value {
 	v := f.eval(f, ew)
 
 	cs := f.Constructors()

@@ -34,19 +34,19 @@ func (p *ListPattern) Link(scope *FuncScope, ew ErrorWriter) Pattern {
 	return &ListPattern{newTokenData(p.Context()), inner, p.innerNames, inner.ListVars()}
 }
 
-func (p *ListPattern) Destructure(arg Value, ew ErrorWriter) *Destructured {
-	concrete, virt := EvalUntil(arg, func(tn string) bool {
+func (p *ListPattern) Destructure(arg Value, stack *Stack, ew ErrorWriter) *Destructured {
+	concrete, virt := EvalUntil(arg, stack, func(tn string) bool {
 		return tn == "[]"
 	}, ew)
 
 	if concrete == nil {
-		return NewDestructured(arg, nil)
+		return NewDestructured(arg, nil, nil)
 	}
 
 	distance := []int{len(virt.Constructors())}
 
 	if IsAll(concrete) {
-		return NewDestructured(concrete, distance)
+		return NewDestructured(concrete, distance, stack)
 	}
 
 	lst := AssertList(concrete)
@@ -56,12 +56,12 @@ func (p *ListPattern) Destructure(arg Value, ew ErrorWriter) *Destructured {
 		// add another empty list for every name
 
 		// distance is based on All type, which matches anything with distance 0
-		dAll := p.inner.Destructure(NewAll(p.Context()), ew)
+		dAll := p.inner.Destructure(NewAll(p.Context()), stack, ew)
 		if dAll.Failed() {
-			return NewDestructured(lst, nil)
+			return NewDestructured(lst, nil, nil)
 		}
 
-		d := NewDestructured(lst, append(distance, dAll.distance...))
+		d := NewDestructured(lst, append(distance, dAll.distance...), stack)
 
 		for _, innerVar := range p.innerVars {
 			d.AddVar(innerVar, NewEmptyList(arg.Context()))
@@ -77,10 +77,11 @@ func (p *ListPattern) Destructure(arg Value, ew ErrorWriter) *Destructured {
 		items := lst.Items()
 
 		for i, item := range items {
-			d := p.inner.Destructure(item, ew)
+			d := p.inner.Destructure(item, stack, ew)
 			if d.Failed() {
 				return NewDestructured(
 					NewList(items, arg.Context()).SetConstructors(concrete.Constructors()),
+					nil,
 					nil,
 				)
 			}
@@ -92,6 +93,7 @@ func (p *ListPattern) Destructure(arg Value, ew ErrorWriter) *Destructured {
 		dFinal := NewDestructured(
 			NewList(items, arg.Context()).SetConstructors(concrete.Constructors()),
 			WorstDistance(ds),
+			stack,
 		)
 
 		// create a bunch of lists
@@ -99,11 +101,11 @@ func (p *ListPattern) Destructure(arg Value, ew ErrorWriter) *Destructured {
 			innerItems := []Value{}
 
 			for _, d := range ds {
-				if d.vars[i] != innerVar {
+				if d.stack.vars[i] != innerVar {
 					panic("unexpected")
 				}
 
-				innerItems = append(innerItems, d.data[i])
+				innerItems = append(innerItems, d.stack.data[i])
 			}
 
 			dFinal.AddVar(innerVar, NewList(innerItems, arg.Context()))

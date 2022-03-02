@@ -91,7 +91,7 @@ func ParseCalls(ts []Token, ew ErrorWriter) Value {
 				ew.Add(exprs[0].Context().Error("invalid function call syntax"))
 			}
 
-			return NewBlindCall(exprs)
+			return NewBlindCall(exprs, exprs[0].Context())
 		}
 	}
 }

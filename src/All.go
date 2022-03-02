@@ -22,10 +22,14 @@ func (v *All) TypeName() string {
 	return "All"
 }
 
+func (v *All) SetConstructors(cs []Call) Value {
+	return &All{ValueData{newTokenData(v.Context()), cs}}
+}
+
 func (v *All) Link(scope Scope, ew ErrorWriter) Value {
 	return v
 }
 
-func (v *All) SetConstructors(cs []Call) Value {
-	return &All{ValueData{newTokenData(v.Context()), cs}}
+func (v *All) Eval(stack *Stack, ew ErrorWriter) Value {
+	return v
 }
