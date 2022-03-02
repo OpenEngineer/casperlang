@@ -30,6 +30,6 @@ func (v *All) Link(scope Scope, ew ErrorWriter) Value {
 	return v
 }
 
-func (v *All) Eval(stack *Stack, ew ErrorWriter) Value {
+func (v *All) SubVars(stack *Stack) Value {
 	return v
 }

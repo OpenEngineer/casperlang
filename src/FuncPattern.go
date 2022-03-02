@@ -37,16 +37,16 @@ func (p *FuncPattern) Link(scope *FuncScope, ew ErrorWriter) Pattern {
 	return p
 }
 
-func (p *FuncPattern) Destructure(arg Value, stack *Stack, ew ErrorWriter) *Destructured {
-	concrete, virt := EvalUntil(arg, stack, func(tn string) bool {
+func (p *FuncPattern) Destructure(arg Value, ew ErrorWriter) *Destructured {
+	concrete, virt := EvalUntil(arg, func(tn string) bool {
 		return tn == p.Dump()
 	}, ew)
 
 	if concrete == nil {
-		return NewDestructured(arg, nil, nil)
+		return NewDestructured(arg, nil)
 	}
 
 	distance := []int{len(virt.Constructors())}
 
-	return NewDestructured(concrete, distance, stack)
+	return NewDestructured(concrete, distance)
 }

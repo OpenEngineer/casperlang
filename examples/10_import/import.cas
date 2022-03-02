@@ -1,3 +1,0 @@
-import "std"
-
-main = println "some modules where imported"

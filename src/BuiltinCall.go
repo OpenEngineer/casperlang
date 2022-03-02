@@ -4,15 +4,17 @@ import (
 	"strings"
 )
 
+type EvalFn func(self *BuiltinCall, ew ErrorWriter) Value
+
 type BuiltinCall struct {
 	ValueData
 	name  string
 	args  []Value
 	links map[string][]Func
-	eval  func(self *BuiltinCall, ew ErrorWriter) Value
+	eval  EvalFn
 }
 
-func NewBuiltinCall(name string, args []Value, links map[string][]Func, eval func(self *BuiltinCall, ew ErrorWriter) Value, ctx Context) *BuiltinCall {
+func NewBuiltinCall(name string, args []Value, links map[string][]Func, eval EvalFn, ctx Context) *BuiltinCall {
 	return &BuiltinCall{newValueData(ctx), name, args, links, eval}
 }
 
@@ -66,8 +68,16 @@ func (f *BuiltinCall) Link(scope Scope, ew ErrorWriter) Value {
 	return f
 }
 
-func (f *BuiltinCall) Eval(_ *Stack, ew ErrorWriter) Value {
+func (f *BuiltinCall) SubVars(stack *Stack) Value {
+	return f
+}
+
+func (f *BuiltinCall) Eval(ew ErrorWriter) Value {
 	v := f.eval(f, ew)
+
+	if v == nil {
+		return nil
+	}
 
 	cs := f.Constructors()
 	if isConstructorName(f.name) {

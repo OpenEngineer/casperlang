@@ -48,6 +48,6 @@ func (v *Float) Link(scope Scope, ew ErrorWriter) Value {
 	return v
 }
 
-func (v *Float) Eval(stack *Stack, ew ErrorWriter) Value {
+func (v *Float) SubVars(stack *Stack) Value {
 	return v
 }

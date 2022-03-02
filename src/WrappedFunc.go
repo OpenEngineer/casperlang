@@ -28,26 +28,6 @@ func (fn *WrappedFunc) Context() Context {
 	}
 }
 
-func (fn *WrappedFunc) TypeName() string {
-	if fn.fn == nil {
-		return "<wrappedfunc>"
-	} else {
-		return fn.fn.TypeName()
-	}
-}
-
-func (fn *WrappedFunc) Link(scope Scope, ew ErrorWriter) Value {
-	return fn
-}
-
-func (fn *WrappedFunc) Constructors() []Call {
-	return fn.fn.Constructors()
-}
-
-func (fn *WrappedFunc) SetConstructors(cs []Call) Value {
-	return fn.fn.SetConstructors(cs)
-}
-
 func (fn *WrappedFunc) Name() string {
 	if fn.fn == nil {
 		return "<wrappedfunc>"
@@ -70,6 +50,14 @@ func (fn *WrappedFunc) ListHeaderTypes() []string {
 
 func (fn *WrappedFunc) Dispatch(args []Value, ew ErrorWriter) *Dispatched {
 	return fn.fn.Dispatch(args, ew)
+}
+
+func (fn *WrappedFunc) Link(scope Scope, ew ErrorWriter) Func {
+	if fn.fn == nil {
+		return fn
+	} else {
+		return fn.fn.Link(scope, ew)
+	}
 }
 
 func (fn *WrappedFunc) EvalRhs(d *Dispatched) Value {

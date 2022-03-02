@@ -88,7 +88,7 @@ func (v *String) Link(scope Scope, ew ErrorWriter) Value {
 	return v
 }
 
-func (v *String) Eval(stack *Stack, ew ErrorWriter) Value {
+func (v *String) SubVars(stack *Stack) Value {
 	return v
 }
 

@@ -1,7 +1,0 @@
-import "std"
-
-#main =
-  #args = readArgs;
-  #show args | \(echo $ + "\n");
-
-main = echo (show ["asd", "asd"])

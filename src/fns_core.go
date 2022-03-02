@@ -286,7 +286,7 @@ var builtinCoreFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 		Name: "map",
 		Args: []string{"\\1", "[]"},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
-			fn := AssertFunc(self.args[0])
+			fn := AssertAnonFunc(self.args[0])
 			lst := AssertList(self.args[1])
 
 			oldItems := lst.Items()
@@ -295,7 +295,7 @@ var builtinCoreFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 
 			for _, oldItem := range oldItems {
 				// a deferred call is fine here
-				newItem := RunFunc(fn, []Value{oldItem}, ew, self.ctx)
+				newItem := fn.EvalRhs([]Value{oldItem}, ew)
 				if newItem == nil {
 					return nil
 				}
@@ -310,7 +310,7 @@ var builtinCoreFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 		Name: "map",
 		Args: []string{"\\2", "[]"},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
-			fn := AssertFunc(self.args[0])
+			fn := AssertAnonFunc(self.args[0])
 			lst := AssertList(self.args[1])
 
 			oldItems := lst.Items()
@@ -318,7 +318,7 @@ var builtinCoreFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 			newItems := []Value{}
 
 			for i, oldItem := range oldItems {
-				newItem := RunFunc(fn, []Value{NewInt(int64(i), self.ctx), oldItem}, ew, self.ctx)
+				newItem := fn.EvalRhs([]Value{NewInt(int64(i), self.ctx), oldItem}, ew)
 				if newItem == nil {
 					return nil
 				}
@@ -335,7 +335,7 @@ var builtinCoreFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 		Args:     []string{"\\2", "[]"},
 		LinkReqs: []string{"Just", "Nothing"},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
-			fn := AssertFunc(self.args[0])
+			fn := AssertAnonFunc(self.args[0])
 			lst := AssertList(self.args[1])
 
 			var acc Value = nil
@@ -347,7 +347,7 @@ var builtinCoreFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 				if acc == nil {
 					acc = oldItem
 				} else {
-					acc = RunFunc(fn, []Value{acc, oldItem}, ew, self.ctx)
+					acc = EvalNonLazy(fn.EvalRhs([]Value{acc, oldItem}, ew), ew)
 					if acc == nil {
 						return nil
 					}
@@ -365,15 +365,14 @@ var builtinCoreFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 		Name: "fold",
 		Args: []string{"\\2", "Any", "[]"},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
-			fn := AssertFunc(self.args[0])
+			fn := AssertAnonFunc(self.args[0])
 			acc := self.args[1]
 			lst := AssertList(self.args[2])
 
 			oldItems := lst.Items()
 
 			for _, oldItem := range oldItems {
-				fmt.Println("running inner fold func", oldItem.Dump())
-				acc = RunFunc(fn, []Value{acc, oldItem}, ew, self.ctx)
+				acc = EvalNonLazy(fn.EvalRhs([]Value{acc, oldItem}, ew), ew)
 				if acc == nil {
 					return nil
 				}
@@ -612,7 +611,7 @@ var builtinCoreFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 		Name: "sort",
 		Args: []string{"\\2", "[]"},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
-			comp := AssertFunc(self.args[0])
+			comp := AssertAnonFunc(self.args[0])
 			lst := AssertList(self.args[1])
 
 			s := NewListSorter(lst, comp, ew, self.ctx)

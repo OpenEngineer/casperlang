@@ -96,8 +96,8 @@ var builtinIOFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 						return nil
 					}
 
-					fn := AssertFunc(self.args[1])
-					res := RunFunc(fn, []Value{runResult}, ew, self.ctx)
+					fn := AssertAnonFunc(self.args[1])
+					res := fn.EvalRhs([]Value{runResult}, ew)
 					if res == nil {
 						return nil
 					}

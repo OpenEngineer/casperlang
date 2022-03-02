@@ -71,6 +71,10 @@ func (t *DisCall) badDispatchMessage(msg string, fns []Func) string {
 	return b.String()
 }
 
+func (t *DisCall) SubVars(stack *Stack) Value {
+	return &DisCall{t.CallData.subArgVars(stack), t.fns}
+}
+
 func (t *DisCall) dispatch(ew ErrorWriter) *Dispatched {
 	ds := []*Dispatched{}
 

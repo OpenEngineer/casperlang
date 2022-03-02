@@ -61,6 +61,17 @@ func (c *CallData) setConstructors(cs []Call) CallData {
 	return CallData{ValueData{newTokenData(c.Context()), cs}, c.args}
 }
 
+func (c *CallData) subArgVars(stack *Stack) CallData {
+	args := []Value{}
+
+	for _, arg_ := range c.args {
+		arg := arg_.SubVars(stack)
+		args = append(args, arg)
+	}
+
+	return CallData{ValueData{newTokenData(c.Context()), c.constructors}, args}
+}
+
 func (c *CallData) Args() []Value {
 	// make a copy
 	res := make([]Value, len(c.args))

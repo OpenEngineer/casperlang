@@ -5,12 +5,13 @@ lst = [Pair 1 2, Pair 0 0, "a", "c", "n", "b", 1, 2, 4, 6, 1.0, "a", 1092381, 10
 Pair a::Int b::Int = Any
 show (Pair a b) = "${a}-${b}"
 
+# type order: [Float, String, Int, Pair]
+
 < Float String = True
 < Float Int    = True
 < String Int   = True
 
-< (Pair a b) (Pair c d) = if (a == c) (b < d) (a < c)
-< Int Pair     = True
+< pa::(Pair a b) pb::(Pair c d) = if (a == c) (b < d) (a < c) 
 < Any Pair     = True # always last
 
 < a b = !(b < a)

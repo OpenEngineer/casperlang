@@ -30,10 +30,11 @@ func (v *NamedCall) Link(scope Scope, ew ErrorWriter) Value {
 	if local != nil {
 		args := v.linkArgs(scope, ew)
 
+		ref := NewVarRef(local, v.Context())
 		if len(args) == 0 {
-			return local
+			return ref
 		} else {
-			return NewBlindCall(append([]Value{local}, args...), v.name.Context())
+			return NewBlindCall(append([]Value{ref}, args...), v.name.Context())
 		}
 	} else {
 		fns := scope.ListDispatchable(v.Name(), v.NumArgs(), ew)
@@ -48,6 +49,14 @@ func (v *NamedCall) Link(scope Scope, ew ErrorWriter) Value {
 	}
 }
 
-func (t *NamedCall) Eval(ew ErrorWriter) Value {
+func (t *NamedCall) SetConstructors(cs []Call) Value {
+	panic("can't SetConstructors of NamedCall, should've been linked")
+}
+
+func (t *NamedCall) SubVars(stack *Stack) Value {
+	panic("can't subVars NamedCall, should've been linked")
+}
+
+func (t *NamedCall) Eval(stack *Stack, ew ErrorWriter) Value {
 	panic("can't eval NamedCall, should've been linked")
 }

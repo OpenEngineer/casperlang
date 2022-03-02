@@ -118,11 +118,11 @@ func (v *Dict) Link(scope Scope, ew ErrorWriter) Value {
 	return NewDict(v.keys, vals, v.Context())
 }
 
-func (v *Dict) Eval(stack *Stack, ew ErrorWriter) Value {
+func (v *Dict) SubVars(stack *Stack) Value {
 	vals := []Value{}
 
 	for _, val_ := range v.vals {
-		val := val_.Eval(stack, ew)
+		val := val_.SubVars(stack)
 		vals = append(vals, val)
 	}
 

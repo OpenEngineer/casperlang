@@ -99,19 +99,21 @@ func (h *FuncHeader) Link(scope Scope, ew ErrorWriter) (*FuncHeader, *FuncScope)
 	return &FuncHeader{h.name, args}, fnScope
 }
 
-func (h *FuncHeader) Destructure(args []Value, stack *Stack, ew ErrorWriter) *Dispatched {
+func (h *FuncHeader) Destructure(args []Value, ew ErrorWriter) *Dispatched {
 	if len(args) != h.NumArgs() {
 		panic("should've been caught higher up")
 	}
 
-	disp := NewDispatched(args, stack, h.Context())
+	disp := NewDispatched(args, h.Context())
 
 	for i, arg := range args {
 		if arg == nil {
 			panic("arg can't be nil")
 		}
 
-		disp.UpdateArg(i, h.args[i].Destructure(arg, ew))
+		des := h.args[i].Destructure(arg, ew)
+
+		disp.UpdateArg(i, des)
 
 		if disp.Failed() {
 			break

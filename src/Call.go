@@ -6,6 +6,8 @@ type Call interface {
 	Name() string
 	NumArgs() int
 	Args() []Value
+
+	Eval(ew ErrorWriter) Value
 }
 
 func IsCall(t Token) bool {

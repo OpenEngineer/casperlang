@@ -92,55 +92,56 @@ func (p *ConstructorPattern) Link(scope *FuncScope, ew ErrorWriter) Pattern {
 	return &ConstructorPattern{newTokenData(p.Context()), p.name, args, fns[0]}
 }
 
-func (p *ConstructorPattern) Destructure(arg Value, stack *Stack, ew ErrorWriter) *Destructured {
-	concrete, virt := EvalUntil(arg, stack, func(tn string) bool {
+func (p *ConstructorPattern) Destructure(arg Value, ew ErrorWriter) *Destructured {
+	concrete, virt := EvalUntil(arg, func(tn string) bool {
 		return tn == p.Name()
 	}, ew)
 
 	if concrete == nil {
-		return NewDestructured(arg, nil, nil)
+		return NewDestructured(arg, nil)
 	}
 
 	distance := []int{len(virt.Constructors())}
 
 	if IsAll(concrete) {
-		return NewDestructured(concrete, distance, stack)
+		return NewDestructured(concrete, distance)
 	}
 
 	call := AssertCall(concrete)
 
 	if call.NumArgs() != len(p.args) {
-		return NewDestructured(concrete, nil, nil)
+		return NewDestructured(concrete, nil)
 	}
 
 	callArgs := call.Args()
+	stack := NewStack()
 
 	for i, pat := range p.args {
-		d := pat.Destructure(callArgs[i], stack, ew)
+		d := pat.Destructure(callArgs[i], ew)
 		if d.Failed() {
 
 			if call.Name() == p.Name() {
 				return NewDestructured(
 					NewDisCall([]Func{p.fn}, callArgs, arg.Context()).SetConstructors(concrete.Constructors()),
 					nil,
-					nil,
 				)
 			} else {
-				return NewDestructured(concrete, nil, nil)
+				return NewDestructured(concrete, nil)
 			}
 		}
 
 		distance = append(distance, d.distance...)
+		stack.Extend(d.stack)
 		callArgs[i] = d.arg
 	}
 
 	if call.Name() == p.Name() {
-		return NewDestructured(
+		return NewDestructuredS(
 			NewDisCall([]Func{p.fn}, callArgs, arg.Context()).SetConstructors(concrete.Constructors()),
 			distance,
 			stack,
 		)
 	} else {
-		return NewDestructured(concrete, distance, stack)
+		return NewDestructuredS(concrete, distance, stack)
 	}
 }

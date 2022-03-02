@@ -40,8 +40,12 @@ func (v *BlindCall) SetConstructors(cs []Call) Value {
 	return &BlindCall{v.setConstructors(cs), v.fn}
 }
 
-func (t *BlindCall) Eval(stack *Stack, ew ErrorWriter) Value {
-	fn_, _ := EvalUntil(t.fn, stack, func(tn string) bool {
+func (t *BlindCall) SubVars(stack *Stack) Value {
+	return &BlindCall{t.CallData.subArgVars(stack), t.fn.SubVars(stack)}
+}
+
+func (t *BlindCall) Eval(ew ErrorWriter) Value {
+	fn_, _ := EvalUntil(t.fn, func(tn string) bool {
 		return strings.HasPrefix(tn, "\\")
 	}, ew)
 
@@ -57,7 +61,11 @@ func (t *BlindCall) Eval(stack *Stack, ew ErrorWriter) Value {
 		return nil
 	}
 
-	v := fn.EvalRhs(t.args, stack, ew)
+	v := fn.EvalRhs(t.args, ew)
+	if v == nil {
+		return nil
+	}
+
 	v = v.SetConstructors(t.Constructors())
 
 	return v

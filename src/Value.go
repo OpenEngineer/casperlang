@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"strings"
 )
 
@@ -12,8 +11,8 @@ type Value interface {
 	Constructors() []Call
 	SetConstructors(cs []Call) Value
 
-	Link(scope Scope, ew ErrorWriter) Value  // returns a value that no longer depends on scopes
-	Eval(stack *Stack, ew ErrorWriter) Value // non-lazy for dict and list, lazy for calls (returning wrapped rhs)
+	Link(scope Scope, ew ErrorWriter) Value // returns a value that no longer depends on scopes
+	SubVars(stack *Stack) Value             // substitute variables
 }
 
 type ValueData struct {
@@ -41,10 +40,6 @@ func newValueData(ctx Context) ValueData {
 
 func (v *ValueData) Constructors() []Call {
 	return v.constructors
-}
-
-func (v *ValueData) SetConstructors(cs []Call) Value {
-	panic("SetConstructors() not (yet) defined")
 }
 
 func DumpValues(ts []Value) string {
@@ -84,7 +79,6 @@ func EvalUntil(arg Value, cond func(string) bool, ew ErrorWriter) (Value, Value)
 				return nil, nil
 			}
 
-			fmt.Println("calling", call.Dump())
 			arg = call.Eval(ew)
 			if arg == nil || !ew.Empty() {
 				return nil, nil

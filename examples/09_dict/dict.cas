@@ -1,0 +1,13 @@
+import "std"
+
+price {qty: _, price: p} = p
+
+d = {qty: 1, price: 100}
+
+getStrict d::{} k::String = d.k | toError "key ${k} not found"
+
+main = 
+  price d | show | println;
+  res = getStrict d "rice"; 
+  herr res;
+  show res | println;

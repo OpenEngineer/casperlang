@@ -34,34 +34,34 @@ func (p *DictPattern) Link(scope *FuncScope, ew ErrorWriter) Pattern {
 	return &DictPattern{newTokenData(p.Context()), inner, p.innerNames, inner.ListVars()}
 }
 
-func (p *DictPattern) Destructure(arg Value, stack *Stack, ew ErrorWriter) *Destructured {
+func (p *DictPattern) Destructure(arg Value, ew ErrorWriter) *Destructured {
 	if arg == nil {
 		panic("arg can't be nil")
 	}
 
-	concrete, virt := EvalUntil(arg, stack, func(tn string) bool {
+	concrete, virt := EvalUntil(arg, func(tn string) bool {
 		return tn == "{}"
 	}, ew)
 
 	if concrete == nil {
-		return NewDestructured(arg, nil, nil)
+		return NewDestructured(arg, nil)
 	}
 
 	distance := []int{len(virt.Constructors())}
 
 	if IsAll(concrete) {
-		return NewDestructured(concrete, distance, stack)
+		return NewDestructured(concrete, distance)
 	}
 
-	dict := AssertDict(arg)
+	dict := AssertDict(concrete)
 
 	if dict.Len() == 0 {
-		dAll := p.inner.Destructure(NewAll(p.Context()), stack, ew)
+		dAll := p.inner.Destructure(NewAll(p.Context()), ew)
 		if dAll.Failed() {
-			return NewDestructured(dict, nil, nil)
+			return NewDestructured(dict, nil)
 		}
 
-		d := NewDestructured(dict, append(distance, dAll.distance...), stack)
+		d := NewDestructured(dict, append(distance, dAll.distance...))
 
 		for _, innerVar := range p.innerVars {
 			d.AddVar(innerVar, NewEmptyDict(arg.Context()))
@@ -74,9 +74,9 @@ func (p *DictPattern) Destructure(arg Value, stack *Stack, ew ErrorWriter) *Dest
 		keys := dict.Keys()
 
 		for i, item := range items {
-			d := p.inner.Destructure(item, stack, ew)
+			d := p.inner.Destructure(item, ew)
 			if d.Failed() {
-				return NewDestructured(NewDict(keys, items, arg.Context()).SetConstructors(concrete.Constructors()), nil, nil)
+				return NewDestructured(NewDict(keys, items, arg.Context()).SetConstructors(concrete.Constructors()), nil)
 			}
 
 			ds = append(ds, d)
@@ -86,7 +86,6 @@ func (p *DictPattern) Destructure(arg Value, stack *Stack, ew ErrorWriter) *Dest
 		dFinal := NewDestructured(
 			NewDict(keys, items, arg.Context()).SetConstructors(concrete.Constructors()),
 			WorstDistance(ds),
-			stack,
 		)
 
 		for i, innerVar := range p.innerVars {

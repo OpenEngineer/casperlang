@@ -12,5 +12,5 @@ type Pattern interface {
 	// mutates FuncScope
 	Link(scope *FuncScope, ew ErrorWriter) Pattern
 
-	Destructure(arg Value, stack *Stack, ew ErrorWriter) *Destructured
+	Destructure(arg Value, ew ErrorWriter) *Destructured
 }

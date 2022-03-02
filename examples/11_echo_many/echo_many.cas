@@ -1,0 +1,7 @@
+import "std"
+
+lst = [1,2,3,4,"asd",False]
+
+echo lst::[] = fold \($ ; $) void (map \(echo (show $) + "\n") lst)
+
+main = echo lst

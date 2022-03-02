@@ -1,0 +1,1 @@
+main = echo "hello world\n";echo "line2\n"

@@ -16,7 +16,6 @@ func Parse(s *Source, ew ErrorWriter) *File {
 	ts := Tokenize(s, ew)
 
 	if !ew.Empty() {
-		panic("empty file")
 		return &File{}
 	}
 

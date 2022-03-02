@@ -1,0 +1,13 @@
+import "std"
+
+Pair Any Any = Any
+
+show (Pair a b) = "${a} ${b}"
+
+first  (Pair Float _     ) = "<float>"
+second (Pair _     a::Int) = a
+
+main = 
+  p = Pair 1.0 2;
+  p | first | show | println;
+  p | second | show | println;

@@ -1,0 +1,12 @@
+import "std"
+
+# print contents of a file
+
+cat (Just p::String) = read (File p)
+cat Nothing = Error "expected 1 arg"
+
+main =
+  args = readArgs;
+  data = cat args.1;
+  herr data; # herr is a builtin function (stand for "Handle Error")
+  echo data

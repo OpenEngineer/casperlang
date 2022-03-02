@@ -34,19 +34,19 @@ func (p *ListPattern) Link(scope *FuncScope, ew ErrorWriter) Pattern {
 	return &ListPattern{newTokenData(p.Context()), inner, p.innerNames, inner.ListVars()}
 }
 
-func (p *ListPattern) Destructure(arg Value, stack *Stack, ew ErrorWriter) *Destructured {
-	concrete, virt := EvalUntil(arg, stack, func(tn string) bool {
+func (p *ListPattern) Destructure(arg Value, ew ErrorWriter) *Destructured {
+	concrete, virt := EvalUntil(arg, func(tn string) bool {
 		return tn == "[]"
 	}, ew)
 
 	if concrete == nil {
-		return NewDestructured(arg, nil, nil)
+		return NewDestructured(arg, nil)
 	}
 
 	distance := []int{len(virt.Constructors())}
 
 	if IsAll(concrete) {
-		return NewDestructured(concrete, distance, stack)
+		return NewDestructured(concrete, distance)
 	}
 
 	lst := AssertList(concrete)
@@ -56,12 +56,12 @@ func (p *ListPattern) Destructure(arg Value, stack *Stack, ew ErrorWriter) *Dest
 		// add another empty list for every name
 
 		// distance is based on All type, which matches anything with distance 0
-		dAll := p.inner.Destructure(NewAll(p.Context()), stack, ew)
+		dAll := p.inner.Destructure(NewAll(p.Context()), ew)
 		if dAll.Failed() {
-			return NewDestructured(lst, nil, nil)
+			return NewDestructured(lst, nil)
 		}
 
-		d := NewDestructured(lst, append(distance, dAll.distance...), stack)
+		d := NewDestructured(lst, append(distance, dAll.distance...))
 
 		for _, innerVar := range p.innerVars {
 			d.AddVar(innerVar, NewEmptyList(arg.Context()))
@@ -77,11 +77,10 @@ func (p *ListPattern) Destructure(arg Value, stack *Stack, ew ErrorWriter) *Dest
 		items := lst.Items()
 
 		for i, item := range items {
-			d := p.inner.Destructure(item, stack, ew)
+			d := p.inner.Destructure(item, ew)
 			if d.Failed() {
 				return NewDestructured(
 					NewList(items, arg.Context()).SetConstructors(concrete.Constructors()),
-					nil,
 					nil,
 				)
 			}
@@ -93,7 +92,6 @@ func (p *ListPattern) Destructure(arg Value, stack *Stack, ew ErrorWriter) *Dest
 		dFinal := NewDestructured(
 			NewList(items, arg.Context()).SetConstructors(concrete.Constructors()),
 			WorstDistance(ds),
-			stack,
 		)
 
 		// create a bunch of lists

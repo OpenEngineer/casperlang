@@ -1,0 +1,7 @@
+import "std"
+
+# example of tuple destructuring
+
+dot [a,b] [c,d] = a*c + b*d
+
+main = dot [1,2] [3,4] | show | println

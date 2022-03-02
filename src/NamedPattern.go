@@ -55,6 +55,6 @@ func (p *NamedPattern) Link(scope *FuncScope, ew ErrorWriter) Pattern {
 	return NewVarPattern(var_, pattern, p.Context())
 }
 
-func (p *NamedPattern) Destructure(arg Value, stack *Stack, ew ErrorWriter) *Destructured {
+func (p *NamedPattern) Destructure(arg Value, ew ErrorWriter) *Destructured {
 	panic("should've been converted into a VarPattern")
 }

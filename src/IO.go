@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"reflect"
 )
 
@@ -24,10 +23,6 @@ func AssertIO(v_ Value) *IO {
 	if ok {
 		return v
 	} else {
-		if v, ok := v_.(*DisCall); ok {
-			fmt.Println(v.Name(), v.Dump())
-		}
-
 		panic("expected *IO, got " + reflect.TypeOf(v_).String())
 	}
 }
@@ -48,7 +43,7 @@ func (v *IO) Link(scope Scope, ew ErrorWriter) Value {
 	return v
 }
 
-func (v *IO) Eval(stack *Stack, ew ErrorWriter) Value {
+func (v *IO) SubVars(stack *Stack) Value {
 	return v
 }
 

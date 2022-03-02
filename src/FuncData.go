@@ -49,15 +49,16 @@ func (f *FuncData) linkArgs(scope Scope, ew ErrorWriter) FuncData {
 	return FuncData{newValueData(f.Context()), head, body}
 }
 
-func (f *FuncData) wrapRhs(stack *Stack) FuncData {
-	return FuncData{newValueData(f.Context()), f.head, NewWrappedValue(f.body, stack)}
+func (f *FuncData) subRhsVars(stack *Stack) FuncData {
+	return FuncData{newValueData(f.Context()), f.head, f.body.SubVars(stack)}
 }
 
-func (f *FuncData) dispatch(args []Value, stack *Stack, ew ErrorWriter) *Dispatched {
-	return f.head.Destructure(args, stack, ew)
+// args should already have all their vars substituted
+func (f *FuncData) dispatch(args []Value, ew ErrorWriter) *Dispatched {
+	return f.head.Destructure(args, ew)
 }
 
 // how can modify this with a stack
 func (f *FuncData) EvalRhs(d *Dispatched) Value {
-	return NewWrappedValue(f.body, d.stack)
+	return f.body.SubVars(d.stack)
 }

@@ -7,17 +7,15 @@ type Dispatched struct {
 	args     []Value
 
 	stack *Stack
-	vars  []*Variable
-	data  []Value
 }
 
-func NewDispatched(args []Value, parent *Stack, ctx Context) *Dispatched {
+func NewDispatched(args []Value, ctx Context) *Dispatched {
 	cpy := make([]Value, len(args))
 	for i, arg := range args {
 		cpy[i] = arg
 	}
 
-	return &Dispatched{ctx, nil, []int{}, args, NewStack(parent)}
+	return &Dispatched{ctx, nil, []int{}, args, NewStack()}
 }
 
 func (d *Dispatched) UpdateArg(i int, des *Destructured) {

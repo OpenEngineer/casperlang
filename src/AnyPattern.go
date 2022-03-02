@@ -36,6 +36,6 @@ func (p *AnyPattern) Link(scope *FuncScope, ew ErrorWriter) Pattern {
 	return p
 }
 
-func (p *AnyPattern) Destructure(arg Value, stack *Stack, ew ErrorWriter) *Destructured {
-	return NewDestructured(arg, []int{math.MaxInt32}, stack)
+func (p *AnyPattern) Destructure(arg Value, ew ErrorWriter) *Destructured {
+	return NewDestructured(arg, []int{math.MaxInt32})
 }

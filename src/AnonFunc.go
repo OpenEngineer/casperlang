@@ -53,15 +53,19 @@ func (f *AnonFunc) Link(scope Scope, ew ErrorWriter) Value {
 	return &AnonFunc{f.linkArgs(scope, ew)}
 }
 
-func (f *AnonFunc) Eval(stack *Stack, ew ErrorWriter) Value {
-	return &AnonFunc{f.wrapRhs(stack)}
+func (f *AnonFunc) SubVars(stack *Stack) Value {
+	return &AnonFunc{f.subRhsVars(stack)}
 }
 
-func (f *AnonFunc) EvalRhs(args []Value, stack *Stack, ew ErrorWriter) Value {
-	d := f.FuncData.dispatch(args, stack, ew)
+func (f *AnonFunc) EvalRhs(args []Value, ew ErrorWriter) Value {
+	if f.NumArgs() != len(args) {
+		panic("should've been checked by caller")
+	}
+
+	d := f.FuncData.dispatch(args, ew)
 
 	if d == nil {
-		ew.Add(t.Context().Error("unable to destructure"))
+		ew.Add(f.Context().Error("unable to destructure"))
 		return nil
 	}
 

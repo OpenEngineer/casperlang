@@ -7,8 +7,12 @@ type Destructured struct {
 	stack *Stack
 }
 
-func NewDestructured(arg Value, distance []int, parent *Stack) *Destructured {
-	return &Destructured{arg, distance, NewStack(parent)}
+func NewDestructured(arg Value, distance []int) *Destructured {
+	return &Destructured{arg, distance, NewStack()}
+}
+
+func NewDestructuredS(arg Value, distance []int, stack *Stack) *Destructured {
+	return &Destructured{arg, distance, stack}
 }
 
 func (d *Destructured) AddVar(v *Variable, data Value) {

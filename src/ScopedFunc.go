@@ -29,20 +29,8 @@ func (f *ScopedFunc) DumpHead() string {
 	return f.fn.DumpHead()
 }
 
-func (f *ScopedFunc) TypeName() string {
-	return f.fn.TypeName()
-}
-
-func (f *ScopedFunc) Link(_ Scope, ew ErrorWriter) Value {
+func (f *ScopedFunc) Link(_ Scope, ew ErrorWriter) Func {
 	return f.fn.Link(f.scope, ew)
-}
-
-func (f *ScopedFunc) Constructors() []Call {
-	return f.fn.Constructors()
-}
-
-func (f *ScopedFunc) SetConstructors(cs []Call) Value {
-	panic("should've been turned into regular func")
 }
 
 func (f *ScopedFunc) Dispatch(args []Value, ew ErrorWriter) *Dispatched {

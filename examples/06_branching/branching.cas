@@ -1,0 +1,11 @@
+import "std"
+
+a = 1
+b = 10
+c = 3
+
+max a b c = if (a>b && a>c) a (if (b>c) b c)
+
+main = 
+  # piping is syntactic sugar for: echo (show (max a b c))
+  max a b c | show | println  # expected 10

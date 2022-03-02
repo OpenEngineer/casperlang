@@ -11,24 +11,10 @@ type Func interface {
 	ListHeaderTypes() []string
 
 	// args should be detached at this point
-	Dispatch(args []Value, stack *Stack, ew ErrorWriter) *Dispatched
+	Dispatch(args []Value, ew ErrorWriter) *Dispatched // args here should already have all their values substituted
 	Link(scope Scope, ew ErrorWriter) Func
 
 	EvalRhs(d *Dispatched) Value
-}
-
-func IsFunc(v Value) bool {
-	_, ok := v.(Func)
-	return ok
-}
-
-func AssertFunc(v_ Value) Func {
-	v, ok := v_.(Func)
-	if ok {
-		return v
-	} else {
-		panic("expected Func")
-	}
 }
 
 func listAmbiguousFuncs(fns []Func) string {

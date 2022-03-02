@@ -1,0 +1,9 @@
+import "std"
+
+main = 
+  lst = ["one", "two", "three"] + ["four", "five", "six"];
+  println "list:";
+  println (fold \($+","+$) "" lst);
+  println "pick a number:";
+  iStr = readLine;
+  (map \($ + "!") lst).(toInt iStr) | show | println;

@@ -6,7 +6,7 @@ type BuiltinFunc struct {
 	argPatterns []Pattern
 	linkReqs    []string
 	links       map[string][]Func
-	eval        func(self *BuiltinCall, ew ErrorWriter) Value
+	eval        EvalFn
 }
 
 func NewBuiltinFunc(cfg BuiltinFuncConfig) *BuiltinFunc {
@@ -72,10 +72,10 @@ func (f *BuiltinFunc) Link(scope Scope, ew ErrorWriter) Func {
 	return f
 }
 
-func (f *BuiltinFunc) Dispatch(args []Value, stack *Stack, ew ErrorWriter) *Dispatched {
+func (f *BuiltinFunc) Dispatch(args []Value, ew ErrorWriter) *Dispatched {
 	head := f.header()
 
-	d := head.Destructure(args, stack, ew)
+	d := head.Destructure(args, ew)
 
 	d.SetFunc(f)
 

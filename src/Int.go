@@ -47,6 +47,6 @@ func (v *Int) Link(scope Scope, ew ErrorWriter) Value {
 	return v
 }
 
-func (v *Int) Eval(stack *Stack, ew ErrorWriter) Value {
+func (v *Int) SubVars(stack *Stack) Value {
 	return v
 }

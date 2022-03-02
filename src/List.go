@@ -97,11 +97,11 @@ func (v *List) Link(scope Scope, ew ErrorWriter) Value {
 	return NewList(items, v.Context())
 }
 
-func (v *List) Eval(stack *Stack, ew ErrorWriter) Value {
+func (v *List) SubVars(stack *Stack) Value {
 	items := []Value{}
 
 	for _, item_ := range v.items {
-		item := item_.Link(stack, ew)
+		item := item_.SubVars(stack)
 		items = append(items, item)
 	}
 

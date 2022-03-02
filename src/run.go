@@ -5,18 +5,24 @@ import (
 	"os"
 )
 
+func EvalNonLazy(v Value, ew ErrorWriter) Value {
+	for v != nil {
+		call, ok := v.(Call)
+		if ok {
+			v = call.Eval(ew)
+		} else {
+			break
+		}
+	}
+
+	return v
+}
+
 // v might've been reduced by a previous call to Eval
 func Run(v Value) {
 	ew := NewErrorWriter()
 
-	for {
-		c, ok := v.(Call)
-		if !ok || !ew.Empty() {
-			break
-		}
-
-		v = c.Eval(ew)
-	}
+	v = EvalNonLazy(v, ew)
 
 	if v != nil && ew.Empty() {
 		if !IsIO(v) {

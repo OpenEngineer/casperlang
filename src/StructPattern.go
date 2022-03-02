@@ -1,6 +1,8 @@
 package main
 
-import "strings"
+import (
+	"strings"
+)
 
 type StructPattern struct {
 	TokenData
@@ -74,32 +76,33 @@ func (p *StructPattern) Link(scope *FuncScope, ew ErrorWriter) Pattern {
 		vals = append(vals, val)
 	}
 
-	return &StructPattern{newTokenData(p.Context()), p.keys, p.vals}
+	return &StructPattern{newTokenData(p.Context()), p.keys, vals}
 }
 
-func (p *StructPattern) Destructure(arg Value, stack *Stack, ew ErrorWriter) *Destructured {
-	concrete, virt := EvalUntil(arg, stack, func(tn string) bool {
+func (p *StructPattern) Destructure(arg Value, ew ErrorWriter) *Destructured {
+	concrete, virt := EvalUntil(arg, func(tn string) bool {
 		return tn == "{}"
 	}, ew)
 
 	if concrete == nil {
-		return NewDestructured(arg, nil, nil)
+		return NewDestructured(arg, nil)
 	}
 
 	distance := []int{len(virt.Constructors())}
 
 	if IsAll(concrete) {
-		return NewDestructured(concrete, distance, stack)
+		return NewDestructured(concrete, distance)
 	}
 
-	dict := AssertDict(arg)
+	dict := AssertDict(concrete)
 
 	if dict.Len() < len(p.keys) {
-		return NewDestructured(concrete, nil, nil)
+		return NewDestructured(concrete, nil)
 	}
 
 	dictVals := dict.Values() // should be a copy, so we can mutate
 	dictKeys := dict.Keys()
+	stack := NewStack()
 
 	for i, pat := range p.vals {
 		key := p.keys[i]
@@ -109,16 +112,16 @@ func (p *StructPattern) Destructure(arg Value, stack *Stack, ew ErrorWriter) *De
 			if check.Value() == key.Value() {
 				found = true
 
-				d := pat.Destructure(dictVals[j], stack, ew)
+				d := pat.Destructure(dictVals[j], ew)
 				if d.Failed() {
 					return NewDestructured(
 						NewDict(dictKeys, dictVals, arg.Context()).SetConstructors(concrete.Constructors()),
-						nil,
 						nil,
 					)
 				}
 
 				distance = append(distance, d.distance...)
+				stack.Extend(d.stack)
 				dictVals[j] = d.arg
 
 				break
@@ -129,12 +132,11 @@ func (p *StructPattern) Destructure(arg Value, stack *Stack, ew ErrorWriter) *De
 			return NewDestructured(
 				NewDict(dictKeys, dictVals, arg.Context()).SetConstructors(concrete.Constructors()),
 				nil,
-				nil,
 			)
 		}
 	}
 
 	concrete = NewDict(dictKeys, dictVals, arg.Context()).SetConstructors(concrete.Constructors())
 
-	return NewDestructured(concrete, distance, stack)
+	return NewDestructuredS(concrete, distance, stack)
 }
