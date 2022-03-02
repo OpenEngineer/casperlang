@@ -57,9 +57,13 @@ File acts as a collection of functions. At this point non unique constructors th
 
 ### 4. eval
 
-The program entry point is evaluated returning which should returning a final IO value.
+The program entry point is evaluated returning a final IO value.
 
 The `IO.Run()` is called. This starts a cascade of nested IO actions, interspersed with pure function calls.
+
+When functions are called its arguments are substituted immediately into a copy of the function's rhs (unevaluated) value.
+
+Note that it is actually the pattern-matching that initiates non-lazy evaluation (the built-in `fold` function is also non-lazy).
 
 ### 5. serialization
 
