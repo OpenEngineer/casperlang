@@ -1,5 +1,7 @@
 package main
 
+import "fmt"
+
 type VarCall struct {
 	CallData
 	var_ *Variable
@@ -18,7 +20,7 @@ func (c *VarCall) TypeName() string {
 }
 
 func (t *VarCall) Dump() string {
-	return t.CallData.dump(t.Name())
+	return t.CallData.dump(t.var_.Dump())
 }
 
 func (v *VarCall) SetConstructors(cs []Call) Value {
@@ -34,18 +36,26 @@ func (v *VarCall) Link(scope Scope, ew ErrorWriter) Value {
 }
 
 func (v *VarCall) Eval(ew ErrorWriter) Value {
-	if v.NumArgs() == 0 {
-		return v.var_.data
+	data := v.var_.Data()
+	if v.Name() == "$1" {
+		fmt.Println("data in $1:", data.Dump())
 	}
 
-	fn, ok := v.var_.data.(Func)
+	if v.NumArgs() == 0 {
+		return data
+	}
+
+	fn, ok := data.(Func)
 	if !ok {
 		ew.Add(v.Context().Error("not a function"))
 		return nil
 	} else {
+
 		d := fn.Dispatch(v.args, ew)
 
-		if d == nil {
+		if !ew.Empty() {
+			return nil
+		} else if d == nil {
 			ew.Add(v.Context().Error("unable to destructure"))
 			return nil
 		}

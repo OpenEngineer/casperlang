@@ -14,13 +14,12 @@ type BuiltinFunc struct {
 func NewBuiltinFunc(cfg BuiltinFuncConfig) *BuiltinFunc {
 	name := cfg.Name
 
-	argPatterns := cfg.ArgPatterns
-	if argPatterns == nil {
-		argPatterns = []Pattern{}
+	argPatterns := []Pattern{}
 
-		for _, argType := range cfg.ArgTypes {
-			argPatterns = append(argPatterns, NewTypePattern(NewBuiltinWord(argType)))
-		}
+	for _, argPatStr := range cfg.Args {
+		pat := ParsePatternString(argPatStr)
+
+		argPatterns = append(argPatterns, pat)
 	}
 
 	eval := cfg.Eval
@@ -40,7 +39,7 @@ func (f *BuiltinFunc) TypeName() string {
 }
 
 func (f *BuiltinFunc) Dump() string {
-	return f.Name() + " <builtin>"
+	return f.DumpHead() + " = <builtin>"
 }
 
 func (f *BuiltinFunc) Name() string {
@@ -83,11 +82,9 @@ func (f *BuiltinFunc) Dispatch(args []Value, ew ErrorWriter) *Dispatched {
 	head := f.header()
 
 	d := head.Destructure(args, ew)
-	if d == nil {
-		return nil
-	}
 
 	d.SetFunc(f)
+
 	return d
 }
 

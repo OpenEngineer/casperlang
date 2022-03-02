@@ -1,5 +1,7 @@
 package main
 
+import "fmt"
+
 type Variable struct {
 	ValueData
 	name string
@@ -16,6 +18,7 @@ func (v *Variable) Dump() string {
 
 func (v *Variable) TypeName() string {
 	if v.data == nil {
+		fmt.Println("variable with unset data returning type name")
 		return ""
 	} else {
 		return v.data.TypeName()

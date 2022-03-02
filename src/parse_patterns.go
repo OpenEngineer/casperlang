@@ -5,6 +5,21 @@ import (
 	"strings"
 )
 
+// useful for builtinfuncs
+func ParsePatternString(str string) Pattern {
+	ts := TokenizeString(str)
+
+	ew := NewErrorWriter()
+
+	p := ParsePattern(ts, ew)
+
+	if !ew.Empty() {
+		panic(str + " " + ew.Dump())
+	}
+
+	return p
+}
+
 func ParsePattern(ts []Token, ew ErrorWriter) Pattern {
 	ps := ParsePatterns(ts, ew)
 	if !ew.Empty() {
@@ -153,7 +168,7 @@ func parsePattern(t_ Token, ew ErrorWriter) Pattern {
 		}
 	case *Parens:
 		if t.Empty() {
-			ew.Add(ctx.Error("invalid pattern syntax"))
+			ew.Add(ctx.Error("invalid pattern syntax2"))
 			return nil
 		} else {
 			return ParseConstructorPattern(t, ew)
@@ -161,7 +176,7 @@ func parsePattern(t_ Token, ew ErrorWriter) Pattern {
 	case *NamedPattern:
 		return t
 	default:
-		ew.Add(ctx.Error("invalid pattern syntax"))
+		ew.Add(ctx.Error("invalid pattern syntax1"))
 		return nil
 	}
 }

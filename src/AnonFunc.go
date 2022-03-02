@@ -20,21 +20,6 @@ func NewNoArgAnonFunc(body Value, ctx Context) *AnonFunc {
 	return NewAnonFunc([]Pattern{}, body, ctx)
 }
 
-func IsAnonFunc(t Token) bool {
-	_, ok := t.(*AnonFunc)
-	return ok
-}
-
-func AssertAnonFunc(t_ Token) *AnonFunc {
-	t, ok := t_.(*AnonFunc)
-
-	if ok {
-		return t
-	} else {
-		panic("expected *AnonFunc")
-	}
-}
-
 func (f *AnonFunc) Dump() string {
 	var b strings.Builder
 
@@ -42,7 +27,7 @@ func (f *AnonFunc) Dump() string {
 
 	if f.NumArgs() > 0 {
 		b.WriteString(f.head.DumpArgs())
-		b.WriteString("= ")
+		b.WriteString("-> ")
 	}
 	b.WriteString(f.body.Dump())
 	b.WriteString(")")
@@ -60,8 +45,6 @@ func (f *AnonFunc) SetConstructors(cs []Call) Value {
 
 func (f *AnonFunc) Dispatch(args []Value, ew ErrorWriter) *Dispatched {
 	d := f.FuncData.dispatch(args, ew)
-	if !d.Failed() {
-		d.SetFunc(f)
-	}
+	d.SetFunc(f)
 	return d
 }

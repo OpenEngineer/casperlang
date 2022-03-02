@@ -13,14 +13,20 @@ func (s *Linker) LinkFunc(fn Func, scope Scope, ew ErrorWriter) Func {
 	if l, ok := s.linked[fn]; ok {
 		return l
 	} else {
-		l_ := fn.Link(scope, ew)
+		// add something temporary to the list (for recursive links)
+		tmp := NewWrappedFunc(nil)
+
+		s.linked[fn] = tmp
+
+		l_ := fn.Link(scope, ew) // recursion might happen here
 
 		l, ok := l_.(Func)
 		if !ok {
-			panic("expeccted Func")
+			panic("expected Func")
 		}
 
 		s.linked[fn] = l
+		tmp.SetFunc(l)
 
 		return l
 	}

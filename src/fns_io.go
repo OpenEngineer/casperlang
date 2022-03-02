@@ -16,7 +16,7 @@ import (
 var builtinIOFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 	BuiltinFuncConfig{
 		Name:     "Path",
-		ArgTypes: []string{"String"},
+		Args:     []string{"String"},
 		LinkReqs: []string{"Any"},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
 			return DeferFunc(self.links["Any"][0], []Value{}, self.ctx)
@@ -24,7 +24,7 @@ var builtinIOFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 	},
 	BuiltinFuncConfig{
 		Name:     "File",
-		ArgTypes: []string{"String"},
+		Args:     []string{"String"},
 		LinkReqs: []string{"Path"},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
 			return DeferFunc(self.links["Path"][0], []Value{self.args[0]}, self.ctx)
@@ -32,7 +32,7 @@ var builtinIOFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 	},
 	BuiltinFuncConfig{
 		Name:     "Dir",
-		ArgTypes: []string{"String"},
+		Args:     []string{"String"},
 		LinkReqs: []string{"Path"},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
 			return DeferFunc(self.links["Path"][0], []Value{self.args[0]}, self.ctx)
@@ -40,15 +40,15 @@ var builtinIOFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 	},
 	BuiltinFuncConfig{
 		Name:     "HttpReq",
-		ArgTypes: []string{"String", "String", "String"},
+		Args:     []string{"String", "String", "String"},
 		LinkReqs: []string{"Any"},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
 			return DeferFunc(self.links["Any"][0], []Value{}, self.ctx)
 		},
 	},
 	BuiltinFuncConfig{
-		Name:     "echo",
-		ArgTypes: []string{"String"},
+		Name: "echo",
+		Args: []string{"String"},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
 			return NewIO(
 				func() Value {
@@ -63,8 +63,8 @@ var builtinIOFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 		},
 	},
 	BuiltinFuncConfig{
-		Name:     ";",
-		ArgTypes: []string{"IO", "IO"},
+		Name: ";",
+		Args: []string{"IO", "IO"},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
 			return NewIO(
 				func() Value {
@@ -84,8 +84,8 @@ var builtinIOFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 		},
 	},
 	BuiltinFuncConfig{
-		Name:     "=",
-		ArgTypes: []string{"IO", "\\1"},
+		Name: "=",
+		Args: []string{"IO", "\\1"},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
 			io := AssertIO(self.args[0])
 
@@ -115,8 +115,8 @@ var builtinIOFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 		},
 	},
 	BuiltinFuncConfig{
-		Name:     "readLine",
-		ArgTypes: []string{},
+		Name: "readLine",
+		Args: []string{},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
 			return NewIO(
 				func() Value {
@@ -130,8 +130,8 @@ var builtinIOFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 		},
 	},
 	BuiltinFuncConfig{
-		Name:     "readArgs",
-		ArgTypes: []string{},
+		Name: "readArgs",
+		Args: []string{},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
 			return NewIO(
 				func() Value {
@@ -148,7 +148,7 @@ var builtinIOFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 	},
 	BuiltinFuncConfig{
 		Name:     "read",
-		ArgTypes: []string{"File"},
+		Args:     []string{"File"},
 		LinkReqs: []string{"Error"},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
 			a := self.args[0].(Call)
@@ -181,7 +181,7 @@ var builtinIOFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 	// TODO: custom permissions
 	BuiltinFuncConfig{
 		Name:     "write",
-		ArgTypes: []string{"File", "String"},
+		Args:     []string{"File", "String"},
 		LinkReqs: []string{"Error", "Ok"},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
 			a := self.args[0].(Call)
@@ -213,7 +213,7 @@ var builtinIOFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 	// TODO: custom permissions
 	BuiltinFuncConfig{
 		Name:     "overwrite",
-		ArgTypes: []string{"File", "String"},
+		Args:     []string{"File", "String"},
 		LinkReqs: []string{"Error", "Ok"},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
 			a := self.args[0].(Call)
@@ -243,7 +243,7 @@ var builtinIOFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 	},
 	BuiltinFuncConfig{
 		Name:     "send",
-		ArgTypes: []string{"HttpReq"},
+		Args:     []string{"HttpReq"},
 		LinkReqs: []string{"Error"},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
 			a := self.args[0].(Call)

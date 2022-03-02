@@ -5,6 +5,9 @@ type TypePattern struct {
 }
 
 func NewTypePattern(w *Word) *TypePattern {
+	if w.Value() == "Any" {
+		panic("use AnyPattern instead")
+	}
 	return &TypePattern{w}
 }
 
@@ -44,14 +47,14 @@ func (p *TypePattern) Link(scope *FuncScope, ew ErrorWriter) Pattern {
 
 func (p *TypePattern) Destructure(arg Value, ew ErrorWriter) *Destructured {
 	concrete, virt := EvalUntil(arg, func(tn string) bool {
-		return tn == p.tName.Value()
+		return tn == p.TypeName()
 	}, ew)
 
-	var dist []int
-
-	if concrete != nil {
-		dist = []int{len(virt.Constructors())}
+	if concrete == nil {
+		return NewDestructured(arg, nil)
 	}
 
-	return NewDestructured(concrete, dist)
+	distance := []int{len(virt.Constructors())}
+
+	return NewDestructured(concrete, distance)
 }

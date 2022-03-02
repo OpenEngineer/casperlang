@@ -41,20 +41,29 @@ func (t *DisCall) Link(scope Scope, ew ErrorWriter) Value {
 	return t
 }
 
-func (t *DisCall) badDispatchMessage(ds []*Dispatched) string {
+func (t *DisCall) badDispatchMessage(msg string, fns []Func) string {
 	var b strings.Builder
 
-	b.WriteString("unable to dispatch \"")
+	b.WriteString(msg)
+	b.WriteString(" (")
 	b.WriteString(t.Name())
-	b.WriteString("\" ")
-	b.WriteString(t.Dump())
+	for _, arg := range t.Args() {
+		b.WriteString(" ")
+		tn := arg.TypeName()
+		if tn == "" {
+			b.WriteString(arg.Dump())
+		} else {
+			b.WriteString(tn)
+		}
+	}
+	b.WriteString(")")
 
-	if ds != nil && len(ds) > 0 {
+	if fns != nil && len(fns) > 0 {
 		b.WriteString("\n  Have:\n")
 
-		for _, d := range ds {
+		for _, fn := range fns {
 			b.WriteString("    ")
-			b.WriteString(d.fn.DumpHead())
+			b.WriteString(fn.DumpHead())
 			b.WriteString("\n")
 		}
 	}
@@ -65,28 +74,42 @@ func (t *DisCall) badDispatchMessage(ds []*Dispatched) string {
 func (t *DisCall) dispatch(ew ErrorWriter) *Dispatched {
 	ds := []*Dispatched{}
 
-	args := t.args
+	if !ew.Empty() {
+		return nil
+	}
+
+	args := t.Args() // make a copy!
 	for _, fn := range t.fns {
-		d := fn.Dispatch(args, ew)
-		if !ew.Empty() {
-			return nil
-		} else if d != nil {
-			args = d.args // update the args as much as possible
-			if !d.Failed() {
+		if fn.NumArgs() == t.NumArgs() {
+			d := fn.Dispatch(args, ew)
+
+			if !ew.Empty() {
+				return nil
+			} else if !d.Failed() {
+				for _, arg := range d.args {
+					if arg == nil {
+						panic("returned args can't be nil")
+					}
+				}
+
+				args = d.args // update the args as much as possible
+
 				ds = append(ds, d)
 			}
 		}
 	}
 
 	if len(ds) == 0 {
-		ew.Add(t.Context().Error(t.badDispatchMessage(nil)))
+		ew.Add(t.Context().Error(t.badDispatchMessage("unable to dispatch", t.fns)))
 		return nil
 	}
 
 	best := PickBest(ds)
 
-	if best == nil {
-		ew.Add(t.Context().Error(t.badDispatchMessage(ds)))
+	if !ew.Empty() {
+		return nil
+	} else if best == nil {
+		ew.Add(t.Context().Error(t.badDispatchMessage("ambiguous dispatch", t.fns)))
 		return nil
 	}
 

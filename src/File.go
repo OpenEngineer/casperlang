@@ -29,6 +29,7 @@ func (f *File) ListDispatchable(name string, nArgs int, ew ErrorWriter) []Func {
 
 		for _, fn_ := range fns_ {
 			if fn_.NumArgs() == nArgs || nArgs == -1 {
+				// recursive calls of functions with same names and same number of arguments will give problems here.
 				fn := f.linker.LinkFunc(fn_.fn, fn_.scope, ew)
 				fns = append(fns, fn)
 			}

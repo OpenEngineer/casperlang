@@ -2,7 +2,6 @@ package main
 
 import (
 	"strconv"
-	"strings"
 )
 
 type FuncPattern struct {
@@ -40,14 +39,14 @@ func (p *FuncPattern) Link(scope *FuncScope, ew ErrorWriter) Pattern {
 
 func (p *FuncPattern) Destructure(arg Value, ew ErrorWriter) *Destructured {
 	concrete, virt := EvalUntil(arg, func(tn string) bool {
-		return strings.HasPrefix(tn, "\\")
+		return tn == p.Dump()
 	}, ew)
 
-	var dist []int = nil
-
-	if concrete != nil {
-		dist = []int{len(virt.Constructors())}
+	if concrete == nil {
+		return NewDestructured(arg, nil)
 	}
 
-	return NewDestructured(concrete, dist)
+	distance := []int{len(virt.Constructors())}
+
+	return NewDestructured(concrete, distance)
 }

@@ -33,6 +33,10 @@ func (p *VarPattern) Link(scope *FuncScope, ew ErrorWriter) Pattern {
 func (p *VarPattern) Destructure(arg Value, ew ErrorWriter) *Destructured {
 	d := p.pattern.Destructure(arg, ew)
 
+	if d.arg == nil {
+		panic("returned arg can't be nil")
+	}
+
 	if !d.Failed() {
 		d.AddVar(p.var_, d.arg)
 	}

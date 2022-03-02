@@ -35,9 +35,17 @@ func (p *DictPattern) Link(scope *FuncScope, ew ErrorWriter) Pattern {
 }
 
 func (p *DictPattern) Destructure(arg Value, ew ErrorWriter) *Destructured {
+	if arg == nil {
+		panic("arg can't be nil")
+	}
+
 	concrete, virt := EvalUntil(arg, func(tn string) bool {
 		return tn == "{}"
 	}, ew)
+
+	if concrete == nil {
+		return NewDestructured(arg, nil)
+	}
 
 	distance := []int{len(virt.Constructors())}
 

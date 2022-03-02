@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"strings"
 )
 
@@ -60,6 +61,10 @@ func DumpValues(ts []Value) string {
 }
 
 func EvalUntil(arg Value, cond func(string) bool, ew ErrorWriter) (Value, Value) {
+	if arg == nil {
+		return nil, nil
+	}
+
 	for _, c := range arg.Constructors() {
 		if cond(c.TypeName()) {
 			return arg, c
@@ -79,12 +84,11 @@ func EvalUntil(arg Value, cond func(string) bool, ew ErrorWriter) (Value, Value)
 				return nil, nil
 			}
 
-			// now eval some more
+			fmt.Println("calling", call.Dump())
 			arg = call.Eval(ew)
-			if arg == nil {
+			if arg == nil || !ew.Empty() {
 				return nil, nil
 			}
-
 		}
 	}
 }

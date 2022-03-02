@@ -38,12 +38,11 @@ func (p *PrimPattern) Destructure(arg Value, ew ErrorWriter) *Destructured {
 		return tn == p.name
 	}, ew)
 
-	var dist []int = nil
-
-	if concrete != nil {
-		// this is primitive, so we can use length of any constructors directly
-		dist = []int{len(virt.Constructors())}
+	if concrete == nil {
+		return NewDestructured(arg, nil)
 	}
 
-	return NewDestructured(concrete, dist)
+	distance := []int{len(virt.Constructors())}
+
+	return NewDestructured(concrete, distance)
 }

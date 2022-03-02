@@ -10,7 +10,7 @@ type BlindCall struct {
 	fn Value // evaluate this until TypeName begins with '\'
 }
 
-func NewBlindCall(args []Value) *BlindCall {
+func NewBlindCall(args []Value) Call {
 	fn := args[0]
 	args = args[1:]
 
@@ -18,6 +18,10 @@ func NewBlindCall(args []Value) *BlindCall {
 }
 
 func (v *BlindCall) TypeName() string {
+	return ""
+}
+
+func (v *BlindCall) Name() string {
 	return ""
 }
 

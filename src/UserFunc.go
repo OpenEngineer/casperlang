@@ -12,21 +12,6 @@ func NewUserFunc(name *Word, args []Pattern, body Value, ctx Context) *UserFunc 
 	return &UserFunc{newFuncData(name, args, body, ctx)}
 }
 
-func IsUserFunc(t Token) bool {
-	_, ok := t.(*UserFunc)
-	return ok
-}
-
-func AssertUserFunc(t_ Token) *UserFunc {
-	t, ok := t_.(*UserFunc)
-
-	if ok {
-		return t
-	} else {
-		panic("expected *UserFunc")
-	}
-}
-
 func (f *UserFunc) Dump() string {
 	var b strings.Builder
 
@@ -45,8 +30,6 @@ func (f *UserFunc) Link(scope Scope, ew ErrorWriter) Value {
 
 func (f *UserFunc) Dispatch(args []Value, ew ErrorWriter) *Dispatched {
 	d := f.FuncData.dispatch(args, ew)
-	if !d.Failed() {
-		d.SetFunc(f)
-	}
+	d.SetFunc(f)
 	return d
 }

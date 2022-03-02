@@ -11,16 +11,16 @@ type Context struct {
 }
 
 func NewBuiltinContext() Context {
-	return Context{
-		&Source{"<builtin>", []rune{}},
-		FilePos{},
-		FilePos{},
-	}
+	return NewSpecialContext("<builtin>")
 }
 
 func NewStdinContext() Context {
+	return NewSpecialContext("<stdin>")
+}
+
+func NewSpecialContext(name string) Context {
 	return Context{
-		&Source{"<stdin>", []rune{}},
+		&Source{name, []rune{}},
 		FilePos{},
 		FilePos{},
 	}

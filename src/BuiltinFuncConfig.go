@@ -1,9 +1,8 @@
 package main
 
 type BuiltinFuncConfig struct {
-	Name        string
-	ArgTypes    []string
-	ArgPatterns []Pattern
-	LinkReqs    []string
-	Eval        func(self *BuiltinCall, ew ErrorWriter) Value
+	Name     string
+	Args     []string
+	LinkReqs []string
+	Eval     func(self *BuiltinCall, ew ErrorWriter) Value
 }

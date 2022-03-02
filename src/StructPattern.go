@@ -82,6 +82,10 @@ func (p *StructPattern) Destructure(arg Value, ew ErrorWriter) *Destructured {
 		return tn == "{}"
 	}, ew)
 
+	if concrete == nil {
+		return NewDestructured(arg, nil)
+	}
+
 	distance := []int{len(virt.Constructors())}
 
 	if IsAll(concrete) {

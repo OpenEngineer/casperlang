@@ -18,6 +18,14 @@ func (h *FuncHeader) IsAnon() bool {
 	return h.name == nil
 }
 
+func (h *FuncHeader) Context() Context {
+	if h.IsAnon() {
+		return h.args[0].Context()
+	} else {
+		return h.name.Context()
+	}
+}
+
 func (h *FuncHeader) IsConstructor() bool {
 	if h.name != nil {
 		if len(h.name.Value()) == 0 {
@@ -93,12 +101,16 @@ func (h *FuncHeader) Link(scope Scope, ew ErrorWriter) (*FuncHeader, *FuncScope)
 
 func (h *FuncHeader) Destructure(args []Value, ew ErrorWriter) *Dispatched {
 	if len(args) != h.NumArgs() {
-		return nil
+		panic("should've been caught higher up")
 	}
 
-	disp := NewDispatched(args, h.name.Context())
+	disp := NewDispatched(args, h.Context())
 
 	for i, arg := range args {
+		if arg == nil {
+			panic("arg can't be nil")
+		}
+
 		disp.UpdateArg(i, h.args[i].Destructure(arg, ew))
 
 		if disp.Failed() {

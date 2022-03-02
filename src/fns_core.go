@@ -11,15 +11,15 @@ import (
 // basic builtin manipulation functions, should be avaiable on all target platforms
 var builtinCoreFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 	BuiltinFuncConfig{
-		Name:     "Any",
-		ArgTypes: []string{},
+		Name: "Any",
+		Args: []string{},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
 			return NewAny(self.ctx)
 		},
 	},
 	BuiltinFuncConfig{
 		Name:     "Bool",
-		ArgTypes: []string{},
+		Args:     []string{},
 		LinkReqs: []string{"Any"},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
 			return DeferFunc(self.links["Any"][0], []Value{}, self.ctx)
@@ -27,7 +27,7 @@ var builtinCoreFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 	},
 	BuiltinFuncConfig{
 		Name:     "True",
-		ArgTypes: []string{},
+		Args:     []string{},
 		LinkReqs: []string{"Bool"},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
 			return DeferFunc(self.links["Bool"][0], []Value{}, self.ctx)
@@ -35,7 +35,7 @@ var builtinCoreFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 	},
 	BuiltinFuncConfig{
 		Name:     "False",
-		ArgTypes: []string{},
+		Args:     []string{},
 		LinkReqs: []string{"Bool"},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
 			return DeferFunc(self.links["Bool"][0], []Value{}, self.ctx)
@@ -43,7 +43,7 @@ var builtinCoreFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 	},
 	BuiltinFuncConfig{
 		Name:     "Maybe",
-		ArgTypes: []string{},
+		Args:     []string{},
 		LinkReqs: []string{"Any"},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
 			return DeferFunc(self.links["Any"][0], []Value{}, self.ctx)
@@ -51,7 +51,7 @@ var builtinCoreFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 	},
 	BuiltinFuncConfig{
 		Name:     "Just",
-		ArgTypes: []string{"Any"},
+		Args:     []string{"Any"},
 		LinkReqs: []string{"Maybe"},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
 			return DeferFunc(self.links["Maybe"][0], []Value{}, self.ctx)
@@ -59,7 +59,7 @@ var builtinCoreFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 	},
 	BuiltinFuncConfig{
 		Name:     "Nothing",
-		ArgTypes: []string{},
+		Args:     []string{},
 		LinkReqs: []string{"Maybe"},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
 			return DeferFunc(self.links["Maybe"][0], []Value{}, self.ctx)
@@ -67,7 +67,7 @@ var builtinCoreFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 	},
 	BuiltinFuncConfig{
 		Name:     "Error",
-		ArgTypes: []string{"String"},
+		Args:     []string{"String"},
 		LinkReqs: []string{"Any"},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
 			return DeferFunc(self.links["Any"][0], []Value{}, self.ctx)
@@ -75,15 +75,15 @@ var builtinCoreFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 	},
 	BuiltinFuncConfig{
 		Name:     "Ok",
-		ArgTypes: []string{},
+		Args:     []string{},
 		LinkReqs: []string{"Any"},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
 			return DeferFunc(self.links["Any"][0], []Value{}, self.ctx)
 		},
 	},
 	BuiltinFuncConfig{
-		Name:     "if",
-		ArgTypes: []string{"Bool", "Any", "Any"},
+		Name: "if",
+		Args: []string{"Bool", "Any", "Any"},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
 			b := self.args[0]
 
@@ -103,43 +103,43 @@ var builtinCoreFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 		},
 	},
 	BuiltinFuncConfig{
-		Name:     "show",
-		ArgTypes: []string{"Int"},
+		Name: "show",
+		Args: []string{"Int"},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
 			return NewString(strconv.FormatInt(AssertInt(self.args[0]).Value(), 10), self.ctx)
 		},
 	},
 	BuiltinFuncConfig{
-		Name:     "showf",
-		ArgTypes: []string{"Float"},
+		Name: "showf",
+		Args: []string{"Float"},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
 			return NewString(fmt.Sprintf("%f", AssertFloat(self.args[0]).Value()), self.ctx)
 		},
 	},
 	BuiltinFuncConfig{
-		Name:     "+",
-		ArgTypes: []string{"String", "String"},
+		Name: "+",
+		Args: []string{"String", "String"},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
 			return NewString(AssertString(self.args[0]).Value()+AssertString(self.args[1]).Value(), self.ctx)
 		},
 	},
 	BuiltinFuncConfig{
-		Name:     "+",
-		ArgTypes: []string{"[]", "[]"},
+		Name: "+",
+		Args: []string{"[]", "[]"},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
 			return MergeLists(self.args[0], self.args[1], self.ctx)
 		},
 	},
 	BuiltinFuncConfig{
-		Name:     "+",
-		ArgTypes: []string{"{}", "{}"},
+		Name: "+",
+		Args: []string{"{}", "{}"},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
 			return MergeDicts(self.args[0], self.args[1], self.ctx)
 		},
 	},
 	BuiltinFuncConfig{
 		Name:     "toInt",
-		ArgTypes: []string{"String"},
+		Args:     []string{"String"},
 		LinkReqs: []string{"Just", "Nothing"},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
 			i, err := strconv.ParseInt(AssertString(self.args[0]).Value(), 10, 64)
@@ -151,16 +151,16 @@ var builtinCoreFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 		},
 	},
 	BuiltinFuncConfig{
-		Name:     "toInt",
-		ArgTypes: []string{"Float"},
+		Name: "toInt",
+		Args: []string{"Float"},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
 			i := int64(math.Round(AssertFloat(self.args[0]).Value()))
 			return NewInt(i, self.ctx)
 		},
 	},
 	BuiltinFuncConfig{
-		Name:     "toFloat",
-		ArgTypes: []string{"Int"},
+		Name: "toFloat",
+		Args: []string{"Int"},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
 			f := float64(AssertInt(self.args[0]).Value())
 			return NewFloat(f, self.ctx)
@@ -168,7 +168,7 @@ var builtinCoreFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 	},
 	BuiltinFuncConfig{
 		Name:     "toFloat",
-		ArgTypes: []string{"String"},
+		Args:     []string{"String"},
 		LinkReqs: []string{"Just", "Nothing"},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
 			f, err := strconv.ParseFloat(AssertString(self.args[0]).Value(), 64)
@@ -182,7 +182,7 @@ var builtinCoreFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 	// returns Maybe
 	BuiltinFuncConfig{
 		Name:     "get",
-		ArgTypes: []string{"[]", "Int"},
+		Args:     []string{"[]", "Int"},
 		LinkReqs: []string{"Just", "Nothing"},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
 			lst := AssertList(self.args[0])
@@ -197,7 +197,7 @@ var builtinCoreFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 	},
 	BuiltinFuncConfig{
 		Name:     "get",
-		ArgTypes: []string{"{}", "String"},
+		Args:     []string{"{}", "String"},
 		LinkReqs: []string{"Just", "Nothing"},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
 			dict := AssertDict(self.args[0])
@@ -212,7 +212,7 @@ var builtinCoreFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 	},
 	BuiltinFuncConfig{
 		Name:     "get",
-		ArgTypes: []string{"String", "Int"},
+		Args:     []string{"String", "Int"},
 		LinkReqs: []string{"Just", "Nothing"},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
 			str := AssertString(self.args[0])
@@ -230,29 +230,29 @@ var builtinCoreFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 		},
 	},
 	BuiltinFuncConfig{
-		Name:     "len",
-		ArgTypes: []string{"[]"},
+		Name: "len",
+		Args: []string{"[]"},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
 			return NewInt(int64(AssertList(self.args[0]).Len()), self.ctx)
 		},
 	},
 	BuiltinFuncConfig{
-		Name:     "len",
-		ArgTypes: []string{"{}"},
+		Name: "len",
+		Args: []string{"{}"},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
 			return NewInt(int64(AssertDict(self.args[0]).Len()), self.ctx)
 		},
 	},
 	BuiltinFuncConfig{
-		Name:     "len",
-		ArgTypes: []string{"String"},
+		Name: "len",
+		Args: []string{"String"},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
 			return NewInt(int64(len(AssertString(self.args[0]).Value())), self.ctx)
 		},
 	},
 	BuiltinFuncConfig{
-		Name:     "toInts",
-		ArgTypes: []string{"String"},
+		Name: "toInts",
+		Args: []string{"String"},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
 			items := []Value{}
 			str := AssertString(self.args[0]).Value()
@@ -266,12 +266,7 @@ var builtinCoreFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 	},
 	BuiltinFuncConfig{
 		Name: "toString",
-		ArgPatterns: []Pattern{
-			NewListPattern(
-				NewTypePattern(NewBuiltinWord("Int")),
-				NewBuiltinContext(),
-			),
-		},
+		Args: []string{"([] Int)"},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
 			lst := AssertList(self.args[0])
 
@@ -288,8 +283,8 @@ var builtinCoreFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 		},
 	},
 	BuiltinFuncConfig{
-		Name:     "map",
-		ArgTypes: []string{"\\1", "[]"},
+		Name: "map",
+		Args: []string{"\\1", "[]"},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
 			fn := AssertFunc(self.args[0])
 			lst := AssertList(self.args[1])
@@ -312,8 +307,8 @@ var builtinCoreFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 		},
 	},
 	BuiltinFuncConfig{
-		Name:     "map",
-		ArgTypes: []string{"\\2", "[]"},
+		Name: "map",
+		Args: []string{"\\2", "[]"},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
 			fn := AssertFunc(self.args[0])
 			lst := AssertList(self.args[1])
@@ -337,7 +332,7 @@ var builtinCoreFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 	// returns Just or Nothing
 	BuiltinFuncConfig{
 		Name:     "fold",
-		ArgTypes: []string{"\\2", "[]"},
+		Args:     []string{"\\2", "[]"},
 		LinkReqs: []string{"Just", "Nothing"},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
 			fn := AssertFunc(self.args[0])
@@ -347,6 +342,7 @@ var builtinCoreFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 
 			oldItems := lst.Items()
 
+			// XXX: in the lazy case this doesn't work because a the variables are overwritten!
 			for _, oldItem := range oldItems {
 				if acc == nil {
 					acc = oldItem
@@ -366,8 +362,8 @@ var builtinCoreFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 		},
 	},
 	BuiltinFuncConfig{
-		Name:     "fold",
-		ArgTypes: []string{"\\2", "Any", "[]"},
+		Name: "fold",
+		Args: []string{"\\2", "Any", "[]"},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
 			fn := AssertFunc(self.args[0])
 			acc := self.args[1]
@@ -376,6 +372,7 @@ var builtinCoreFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 			oldItems := lst.Items()
 
 			for _, oldItem := range oldItems {
+				fmt.Println("running inner fold func", oldItem.Dump())
 				acc = RunFunc(fn, []Value{acc, oldItem}, ew, self.ctx)
 				if acc == nil {
 					return nil
@@ -387,7 +384,7 @@ var builtinCoreFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 	},
 	BuiltinFuncConfig{
 		Name:     "==",
-		ArgTypes: []string{"Int", "Int"},
+		Args:     []string{"Int", "Int"},
 		LinkReqs: []string{"False", "True"},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
 			if AssertInt(self.args[0]).Value() == AssertInt(self.args[1]).Value() {
@@ -399,7 +396,7 @@ var builtinCoreFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 	},
 	BuiltinFuncConfig{
 		Name:     "!=",
-		ArgTypes: []string{"Int", "Int"},
+		Args:     []string{"Int", "Int"},
 		LinkReqs: []string{"False", "True"},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
 			if AssertInt(self.args[0]).Value() != AssertInt(self.args[1]).Value() {
@@ -411,7 +408,7 @@ var builtinCoreFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 	},
 	BuiltinFuncConfig{
 		Name:     "<",
-		ArgTypes: []string{"Int", "Int"},
+		Args:     []string{"Int", "Int"},
 		LinkReqs: []string{"False", "True"},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
 			if AssertInt(self.args[0]).Value() < AssertInt(self.args[1]).Value() {
@@ -423,7 +420,7 @@ var builtinCoreFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 	},
 	BuiltinFuncConfig{
 		Name:     ">",
-		ArgTypes: []string{"Int", "Int"},
+		Args:     []string{"Int", "Int"},
 		LinkReqs: []string{"False", "True"},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
 			if AssertInt(self.args[0]).Value() > AssertInt(self.args[1]).Value() {
@@ -435,7 +432,7 @@ var builtinCoreFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 	},
 	BuiltinFuncConfig{
 		Name:     "<=",
-		ArgTypes: []string{"Int", "Int"},
+		Args:     []string{"Int", "Int"},
 		LinkReqs: []string{"False", "True"},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
 			if AssertInt(self.args[0]).Value() <= AssertInt(self.args[1]).Value() {
@@ -447,7 +444,7 @@ var builtinCoreFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 	},
 	BuiltinFuncConfig{
 		Name:     ">=",
-		ArgTypes: []string{"Int", "Int"},
+		Args:     []string{"Int", "Int"},
 		LinkReqs: []string{"False", "True"},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
 			if AssertInt(self.args[0]).Value() >= AssertInt(self.args[1]).Value() {
@@ -459,7 +456,7 @@ var builtinCoreFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 	},
 	BuiltinFuncConfig{
 		Name:     "==",
-		ArgTypes: []string{"Float", "Float"},
+		Args:     []string{"Float", "Float"},
 		LinkReqs: []string{"False", "True"},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
 			if AssertFloat(self.args[0]).Value() == AssertFloat(self.args[1]).Value() {
@@ -471,7 +468,7 @@ var builtinCoreFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 	},
 	BuiltinFuncConfig{
 		Name:     "!=",
-		ArgTypes: []string{"Float", "Float"},
+		Args:     []string{"Float", "Float"},
 		LinkReqs: []string{"False", "True"},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
 			if AssertFloat(self.args[0]).Value() != AssertFloat(self.args[1]).Value() {
@@ -483,7 +480,7 @@ var builtinCoreFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 	},
 	BuiltinFuncConfig{
 		Name:     "<",
-		ArgTypes: []string{"Float", "Float"},
+		Args:     []string{"Float", "Float"},
 		LinkReqs: []string{"False", "True"},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
 			if AssertFloat(self.args[0]).Value() < AssertFloat(self.args[1]).Value() {
@@ -495,7 +492,7 @@ var builtinCoreFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 	},
 	BuiltinFuncConfig{
 		Name:     ">",
-		ArgTypes: []string{"Float", "Float"},
+		Args:     []string{"Float", "Float"},
 		LinkReqs: []string{"False", "True"},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
 			if AssertFloat(self.args[0]).Value() > AssertFloat(self.args[1]).Value() {
@@ -507,7 +504,7 @@ var builtinCoreFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 	},
 	BuiltinFuncConfig{
 		Name:     "<=",
-		ArgTypes: []string{"Float", "Float"},
+		Args:     []string{"Float", "Float"},
 		LinkReqs: []string{"False", "True"},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
 			if AssertFloat(self.args[0]).Value() <= AssertFloat(self.args[1]).Value() {
@@ -519,7 +516,7 @@ var builtinCoreFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 	},
 	BuiltinFuncConfig{
 		Name:     ">=",
-		ArgTypes: []string{"Float", "Float"},
+		Args:     []string{"Float", "Float"},
 		LinkReqs: []string{"False", "True"},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
 			if AssertFloat(self.args[0]).Value() >= AssertFloat(self.args[1]).Value() {
@@ -531,7 +528,7 @@ var builtinCoreFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 	},
 	BuiltinFuncConfig{
 		Name:     "==",
-		ArgTypes: []string{"String", "String"},
+		Args:     []string{"String", "String"},
 		LinkReqs: []string{"False", "True"},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
 			if AssertString(self.args[0]).Value() == AssertString(self.args[1]).Value() {
@@ -543,7 +540,7 @@ var builtinCoreFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 	},
 	BuiltinFuncConfig{
 		Name:     "!=",
-		ArgTypes: []string{"String", "String"},
+		Args:     []string{"String", "String"},
 		LinkReqs: []string{"False", "True"},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
 			if AssertString(self.args[0]).Value() != AssertString(self.args[1]).Value() {
@@ -555,7 +552,7 @@ var builtinCoreFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 	},
 	BuiltinFuncConfig{
 		Name:     "<",
-		ArgTypes: []string{"String", "String"},
+		Args:     []string{"String", "String"},
 		LinkReqs: []string{"False", "True"},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
 			if AssertString(self.args[0]).Value() < AssertString(self.args[1]).Value() {
@@ -567,7 +564,7 @@ var builtinCoreFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 	},
 	BuiltinFuncConfig{
 		Name:     ">",
-		ArgTypes: []string{"String", "String"},
+		Args:     []string{"String", "String"},
 		LinkReqs: []string{"False", "True"},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
 			if AssertString(self.args[0]).Value() > AssertString(self.args[1]).Value() {
@@ -579,7 +576,7 @@ var builtinCoreFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 	},
 	BuiltinFuncConfig{
 		Name:     "<=",
-		ArgTypes: []string{"String", "String"},
+		Args:     []string{"String", "String"},
 		LinkReqs: []string{"False", "True"},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
 			if AssertString(self.args[0]).Value() <= AssertString(self.args[1]).Value() {
@@ -591,7 +588,7 @@ var builtinCoreFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 	},
 	BuiltinFuncConfig{
 		Name:     ">=",
-		ArgTypes: []string{"String", "String"},
+		Args:     []string{"String", "String"},
 		LinkReqs: []string{"False", "True"},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
 			if AssertString(self.args[0]).Value() >= AssertString(self.args[1]).Value() {
@@ -602,8 +599,8 @@ var builtinCoreFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 		},
 	},
 	BuiltinFuncConfig{
-		Name:     "panic",
-		ArgTypes: []string{"String"},
+		Name: "panic",
+		Args: []string{"String"},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
 			// TODO: print stack trace somehow
 			fmt.Fprintf(os.Stderr, "%s\n", self.ctx.Error(AssertString(self.args[0]).Value()).Error())
@@ -612,8 +609,8 @@ var builtinCoreFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 		},
 	},
 	BuiltinFuncConfig{
-		Name:     "sort",
-		ArgTypes: []string{"\\2", "[]"},
+		Name: "sort",
+		Args: []string{"\\2", "[]"},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
 			comp := AssertFunc(self.args[0])
 			lst := AssertList(self.args[1])

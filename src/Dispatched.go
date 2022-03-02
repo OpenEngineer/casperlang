@@ -21,7 +21,7 @@ func NewDispatched(args []Value, ctx Context) *Dispatched {
 
 func (d *Dispatched) UpdateArg(i int, des *Destructured) {
 	if des == nil {
-		return
+		panic("des can't be nil")
 	}
 
 	d.args[i] = des.arg
