@@ -18,6 +18,11 @@ type Module struct {
 }
 
 func LoadModule(p *Package, consumers []*Module, dir *String, ew ErrorWriter) *Module {
+	if !isDir(dir.Value()) {
+		ew.Add(dir.Context().Error("\"" + dir.Value() + "\" not found"))
+		return nil
+	}
+
 	if DEBUG_PKG_LOADING {
 		fmt.Println("loading module \"" + dir.Value() + "\"")
 	}

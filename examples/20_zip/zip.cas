@@ -1,0 +1,15 @@
+import "std"
+
+Pair a b = Any
+
+firsts ([] (Pair a _)) = a
+seconds ([] (Pair _ b)) = b
+zip ([] (Pair a b)) = zip a b
+
+_print x::Any = x | show | println
+
+main =
+  lst = [Pair 1 "a", Pair 2 "b", Pair 3 "c"];
+  lst | firsts  | _print;
+  lst | seconds | _print;
+  lst | zip     | _print

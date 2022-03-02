@@ -1,0 +1,3 @@
+import "std"
+
+my_print x::Any = x | show | println

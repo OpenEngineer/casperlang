@@ -1,3 +1,7 @@
 import "std"
+import "./my_module"
 
-main = println "some modules where imported"
+main = 
+  println "some modules where imported";
+  my_print 123
+
