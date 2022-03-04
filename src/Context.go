@@ -38,6 +38,10 @@ func (ctx Context) EndError(msg string) error {
 	return &Error{ctx, true, msg}
 }
 
+func (ctx Context) WriteLocation() string {
+	return ctx.Path() + ":" + ctx.start.ToString()
+}
+
 func MergeContexts(a Context, b Context) Context {
 	start := a.start
 	end := b.end

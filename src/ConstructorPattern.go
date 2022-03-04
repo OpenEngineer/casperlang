@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"strings"
 )
 
@@ -88,7 +89,7 @@ func (p *ConstructorPattern) Link(scope *FuncScope, ew ErrorWriter) Pattern {
 	if len(fns) == 0 {
 		ew.Add(p.name.Context().Error("\"" + name + "\" undefined"))
 	} else if len(fns) > 1 {
-		ew.Add(p.name.Context().Error("multiple definitions of \"" + name + "\""))
+		ew.Add(errors.New(multipleConstructorsError(name, fns)))
 	}
 
 	args := []Pattern{}

@@ -4,5 +4,6 @@
       "version": "0.1.2",
       "url": "github.com/openengineer/casperlang-stdlib"
     }
-  }
+  },
+  "prelude": ["std"]
 }

@@ -427,6 +427,34 @@ func (p *Package) AddModule(m *Module, ew ErrorWriter) {
 	}
 }
 
+func (p *Package) GetPrelude(ew ErrorWriter) []*String {
+	prelude_, ok := p.raw.GetStrict("prelude")
+	if !ok {
+		return []*String{}
+	}
+
+	prelude, ok := prelude_.(*List)
+	if !ok {
+		ew.Add(prelude_.Context().Error("expected List"))
+		return nil
+	}
+
+	// check that each item is a string
+	items := []*String{}
+
+	for _, item_ := range prelude.Items() {
+		item, ok := item_.(*String)
+		if !ok {
+			ew.Add(item.Context().Error("expected String"))
+			return nil
+		} else {
+			items = append(items, item)
+		}
+	}
+
+	return items
+}
+
 func (p *Package) MergeModuleFuncs() {
 	for _, dep := range p.deps {
 		dep.MergeModuleFuncs()

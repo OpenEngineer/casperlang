@@ -44,7 +44,7 @@ func (t *List) Dump() string {
 	b.WriteString("[")
 
 	for i, item := range t.items {
-		b.WriteString(item.Dump())
+		b.WriteString(unwrapParens(item.Dump()))
 
 		if i < len(t.items)-1 {
 			b.WriteString(",")

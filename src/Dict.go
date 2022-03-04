@@ -47,7 +47,7 @@ func (t *Dict) Dump() string {
 
 		b.WriteString(key.Dump())
 		b.WriteString(":")
-		b.WriteString(val.Dump())
+		b.WriteString(unwrapParens(val.Dump()))
 
 		if i < len(t.vals)-1 {
 			b.WriteString(",")

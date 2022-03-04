@@ -153,6 +153,32 @@ func (m *Module) GetDependencies() []*Module {
 	return deps
 }
 
+func (m *Module) listFuncs(name string) []Func {
+	fns := []Func{}
+
+	for _, fn := range m.all {
+		if fn.Name() == name {
+			fns = append(fns, fn.fn)
+		}
+	}
+
+	return fns
+}
+
+func multipleConstructorsError(name string, fns []Func) string {
+	var b strings.Builder
+	b.WriteString("multiple definitions of \"")
+	b.WriteString(name)
+	b.WriteString("\"")
+
+	for _, fn := range fns {
+		b.WriteString("\n  ")
+		b.WriteString(fn.Context().WriteLocation())
+	}
+
+	return b.String()
+}
+
 // also detect non-unique constructors
 func (m *Module) ListLocalTypes(ew ErrorWriter) []string {
 	lst := []string{}
@@ -162,7 +188,7 @@ Outer:
 		if isConstructorName(fn.Name()) {
 			for _, check := range lst {
 				if check == fn.Name() {
-					ew.Add(fn.Context().Error("multiple definitions of \"" + fn.Name() + "\""))
+					ew.Add(errors.New(multipleConstructorsError(fn.Name(), m.listFuncs(fn.Name()))))
 					continue Outer
 				}
 			}

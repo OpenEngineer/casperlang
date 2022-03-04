@@ -175,9 +175,12 @@ func writeDir(fs billy.Filesystem, dirSrc string, dirDst string) error {
 			if err := writeDir(fs, src, dst); err != nil {
 				return err
 			}
-		} else if filepath.Ext(file.Name()) == ".cas" {
-			if err := writeFile(fs, src, dst); err != nil {
-				return err
+		} else {
+			ext := filepath.Ext(file.Name())
+			if ext == ".cas" || file.Name() == "package.json" {
+				if err := writeFile(fs, src, dst); err != nil {
+					return err
+				}
 			}
 		}
 	}

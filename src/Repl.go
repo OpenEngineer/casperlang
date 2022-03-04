@@ -21,8 +21,13 @@ func NewRepl(ew ErrorWriter) *Repl {
 	}
 
 	f := p.modules[""].files[0]
-
-	return &Repl{p, f, nil}
+	f.GetModules(p, []*Module{}, ew)
+	if !ew.Empty() {
+		return nil
+	} else {
+		p.RegisterFuncs(ew)
+		return &Repl{p, f, nil}
+	}
 }
 
 func (r *Repl) RegisterTerm(t *terminal.Terminal) {

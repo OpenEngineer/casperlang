@@ -41,3 +41,14 @@ func IsLiteral(t Token) bool {
 func IsContainer(t Token) bool {
 	return IsDict(t) || IsList(t)
 }
+
+func unwrapParens(s string) string {
+	n := len(s)
+	if n <= 2 {
+		return s
+	} else if s[0] == '(' && s[n-1] == ')' {
+		return s[1 : n-1]
+	} else {
+		return s
+	}
+}

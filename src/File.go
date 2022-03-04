@@ -115,6 +115,22 @@ func isAbsPath(path string) bool {
 }
 
 func (f *File) GetModules(p *Package, consumers []*Module, ew ErrorWriter) {
+	prelude := p.GetPrelude(ew)
+	if !ew.Empty() {
+		return
+	} else if len(prelude) > 0 {
+	Outer1:
+		for _, prel := range prelude {
+			for _, check := range f.imports {
+				if check.Value() == prel.Value() {
+					continue Outer1
+				}
+			}
+
+			f.imports = append(f.imports, prel)
+		}
+	}
+
 	toRemove := []int{}
 	for i, imp := range f.imports {
 		var imodule *Module

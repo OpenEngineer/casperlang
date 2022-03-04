@@ -40,7 +40,7 @@ func (f *AnonFunc) Dump() string {
 		b.WriteString(f.head.DumpArgs())
 		b.WriteString("-> ")
 	}
-	b.WriteString(f.body.Dump())
+	b.WriteString(unwrapParens(f.body.Dump()))
 	b.WriteString(")")
 
 	return b.String()
