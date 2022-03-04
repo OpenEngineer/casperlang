@@ -1,4 +1,4 @@
-import "std"
+#!/usr/bin/env casper
 
 price {qty: _, price: p} = p
 

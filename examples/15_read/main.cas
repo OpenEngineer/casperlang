@@ -1,4 +1,4 @@
-import "std"
+#!/usr/bin/env casper
 
 main =
   echo "what is your first name?\n";

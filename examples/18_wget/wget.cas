@@ -1,4 +1,4 @@
-import "std"
+#!/usr/bin/env casper
 
 wget (Just url::String) = send (HttpReq "GET" url "")
 wget Nothing = Error "expected 1 arg"

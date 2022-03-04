@@ -1,4 +1,4 @@
-import "std"
+#!/usr/bin/env casper
 
 # card suit enum
 Suit    = Any

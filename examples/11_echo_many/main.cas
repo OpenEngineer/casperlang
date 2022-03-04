@@ -1,4 +1,4 @@
-import "std"
+#!/usr/bin/env casper
 
 lst = [1,2,3,4,"asd",False]
 

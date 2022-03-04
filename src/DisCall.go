@@ -51,13 +51,13 @@ func badDispatchMessage(name string, args []Value, msg string, fns []Func) strin
 
 	b.WriteString(name)
 	for _, arg := range args {
-		b.WriteString(" ")
-		tn := arg.TypeName()
-		if tn == "" {
-			b.WriteString(arg.Dump())
-		} else {
-			b.WriteString(tn)
+		ew := NewErrorWriter()
+		arg_ := EvalEager(arg, ew)
+		if ew.Empty() {
+			arg = EvalPretty(arg_)
 		}
+		b.WriteString(" ")
+		b.WriteString(arg.Dump())
 	}
 
 	if fns != nil && len(fns) > 0 {
@@ -92,7 +92,6 @@ func (t *DisCall) dispatch(ew ErrorWriter) *Dispatched {
 	for _, fn := range t.fns {
 		if fn.NumArgs() == t.NumArgs() {
 			d := fn.Dispatch(args, ew)
-
 			if !ew.Empty() {
 				return nil
 			} else if !d.Failed() {
@@ -131,6 +130,7 @@ func (t *DisCall) Eval(ew ErrorWriter) Value {
 	if d == nil {
 		return nil
 	} else {
+		d.ctx = t.Context()
 		v := d.Eval()
 
 		cs := t.Constructors()

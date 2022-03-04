@@ -1,0 +1,5 @@
+#!/usr/bin/env casper
+# hash-bangs work as expected
+main =
+  args = readArgs;
+  show args.1 | \(echo $ + "\n");

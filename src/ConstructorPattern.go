@@ -116,7 +116,7 @@ func (p *ConstructorPattern) Destructure(arg Value, ew ErrorWriter) *Destructure
 		return NewDestructured(concrete, distance)
 	}
 
-	call := AssertCall(concrete)
+	call := AssertCall(virt)
 
 	if call.NumArgs() != len(p.args) {
 		return NewDestructured(concrete, nil)

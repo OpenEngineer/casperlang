@@ -22,7 +22,7 @@ func (t *NamedCall) TypeName() string {
 }
 
 func (t *NamedCall) Dump() string {
-	return "NC" + t.CallData.dump(t.Name())
+	return t.CallData.dump(t.Name())
 }
 
 func (v *NamedCall) Link(scope Scope, ew ErrorWriter) Value {

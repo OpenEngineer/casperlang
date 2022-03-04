@@ -1,4 +1,4 @@
-import "std"
+#!/usr/bin/env casper
 
 printbool b::Bool = echo (show b) + "\n"
 
@@ -6,7 +6,7 @@ printboolalt b::Bool =
   if b (echo "true\n") (echo "false\n")
 
 main =
-  echo "#demo of AND, OR, XOR, NOT, and printing bools\n";
+  #demo of AND, OR, XOR, NOT, and printing bools
   x = (1==1 && 2==2) == False; # de
   printbool x; 
   printboolalt !x

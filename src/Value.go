@@ -54,35 +54,3 @@ func DumpValues(ts []Value) string {
 
 	return b.String()
 }
-
-func EvalUntil(arg Value, cond func(string) bool, ew ErrorWriter) (Value, Value) {
-	if arg == nil {
-		return nil, nil
-	}
-
-	for _, c := range arg.Constructors() {
-		if cond(c.TypeName()) {
-			return arg, c
-		}
-	}
-
-	if arg.TypeName() == "All" {
-		return arg, arg
-	}
-
-	for {
-		if cond(arg.TypeName()) {
-			return arg, arg
-		} else {
-			call, ok := arg.(Call)
-			if !ok {
-				return nil, nil
-			}
-
-			arg = call.Eval(ew)
-			if arg == nil || !ew.Empty() {
-				return nil, nil
-			}
-		}
-	}
-}

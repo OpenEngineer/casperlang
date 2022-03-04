@@ -1,3 +1,5 @@
+#!/usr/bin/env casper
+
 sum l::([] Int) = fold \($ + $) 0 l
 
 main = 

@@ -1,4 +1,4 @@
-import "std"
+#!/usr/bin/env casper
 
 main = 
   lst = ["one", "two", "three"] + ["four", "five", "six"];

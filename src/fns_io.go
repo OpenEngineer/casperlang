@@ -8,7 +8,10 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"os/exec"
+	"path/filepath"
 	"strconv"
+	"strings"
 )
 
 // XXX: are the evals here redundant, because they are already done in Call?
@@ -44,6 +47,21 @@ var builtinIOFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 		LinkReqs: []string{"Any"},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
 			return DeferFunc(self.links["Any"][0], []Value{}, self.ctx)
+		},
+	},
+	BuiltinFuncConfig{
+		Name:    "exit",
+		Args:    []string{"Int"},
+		Targets: []string{"default"},
+		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
+			return NewIO(
+				func(ioc IOContext) Value {
+					i := AssertInt(self.args[0]).Value()
+					os.Exit(int(i))
+					return nil
+				},
+				self.ctx,
+			)
 		},
 	},
 	BuiltinFuncConfig{
@@ -154,6 +172,7 @@ var builtinIOFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 			a := self.args[0].(Call)
 			p := AssertString(a.Args()[0])
 
+			// TODO: should be relative to current path?
 			fname := p.Value()
 
 			return NewIO(
@@ -280,6 +299,84 @@ var builtinIOFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 					}
 
 					return NewString(string(body), self.ctx)
+				},
+				self.ctx,
+			)
+		},
+	},
+	BuiltinFuncConfig{
+		Name:     "run",
+		Args:     []string{"String"},
+		LinkReqs: []string{"Error"},
+		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
+			return NewIO(
+				func(ioc IOContext) Value {
+					cmdRaw := AssertString(self.args[0]).Value()
+
+					fields := strings.Fields(cmdRaw)
+					if len(fields) < 1 {
+						return DeferFunc(self.links["Error"][0], []Value{NewString("empty cmd", self.ctx)}, self.ctx)
+					} else {
+						cmdName := fields[0]
+						args := fields[1:]
+
+						if isRelPath(cmdName) {
+							cmdName = filepath.Join(filepath.Dir(self.ctx.Path()), cmdName)
+						}
+
+						cmd := exec.Command(cmdName, args...)
+
+						out, err := cmd.CombinedOutput()
+						if err != nil {
+							return DeferFunc(self.links["Error"][0], []Value{NewString(err.Error(), self.ctx)}, self.ctx)
+						} else {
+							return NewString(string(out), self.ctx)
+						}
+					}
+				},
+				self.ctx,
+			)
+		},
+	},
+	BuiltinFuncConfig{
+		Name:     "run",
+		Args:     []string{"String", "String"},
+		LinkReqs: []string{"Error"},
+		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
+			return NewIO(
+				func(ioc IOContext) Value {
+					cmdRaw := AssertString(self.args[0]).Value()
+					stdinRaw := AssertString(self.args[1]).Value()
+
+					fields := strings.Fields(cmdRaw)
+					if len(fields) < 1 {
+						return DeferFunc(self.links["Error"][0], []Value{NewString("empty cmd", self.ctx)}, self.ctx)
+					} else {
+						cmdName := fields[0]
+						args := fields[1:]
+
+						if isRelPath(cmdName) {
+							cmdName = filepath.Join(filepath.Dir(self.ctx.Path()), cmdName)
+						}
+
+						cmd := exec.Command(cmdName, args...)
+						stdin, err := cmd.StdinPipe()
+						if err != nil {
+							return DeferFunc(self.links["Error"][0], []Value{NewString(err.Error(), self.ctx)}, self.ctx)
+						}
+
+						go func() {
+							defer stdin.Close()
+							io.WriteString(stdin, stdinRaw)
+						}()
+
+						out, err := cmd.CombinedOutput()
+						if err != nil {
+							return DeferFunc(self.links["Error"][0], []Value{NewString(err.Error(), self.ctx)}, self.ctx)
+						} else {
+							return NewString(string(out), self.ctx)
+						}
+					}
 				},
 				self.ctx,
 			)

@@ -1,0 +1,38 @@
+#!/usr/bin/env casper
+
+handleError (Error msg) id::String = Return (println id + " nok (details: " + msg + ")")
+handleError x           _  = Ok
+
+run cmd::String Nothing = run cmd
+run cmd::String (Just stdin::String) = run cmd stdin
+
+test path::String args::([] String) stdin::Maybe expected::String = 
+  data = run "casper " + path + "/main.cas" + (fold \($ + " " + $) "" args) stdin;
+  handleError data path;
+  if (data == expected) (println path + " ok") (println path + " nok (expected \"" + expected + "\", got \"" + data + "\")"; exit 1)
+
+test path::String args::([] String) expected::String =
+  test path args Nothing expected
+
+test path::String expected::String =
+  test path [] expected
+
+main =
+  test "./01_hello_world" "hello world\n";
+  test "./02_hello_world_bis" "hello world\nline2\n";
+  test "./03_import" "some modules where imported\n123\n";
+  test "./04_read_args" ["hello_world"] "hello_world\n";
+  test "./05_bool" "false\ntrue\n";
+  test "./06_branching" "10\n";
+  test "./07_enum" "2 of clubs\n";
+  test "./08_cat" ["./08_cat/example_data.txt"] "hello world\n";
+  test "./09_dict" "100\nError: key rice not found\n";
+  test "./10_dot" "11\n";
+  test "./11_echo_many" "1\n2\n3\n4\nasd\nfalse\n";
+  test "./12_lambda" "10\n";
+  test "./13_list" [] (Just "4") "list:\n,one,two,three,four,five,six\npick a number:\nfive!\n";
+  test "./14_pair" "<float>\n2\n";
+  test "./15_read" [] (Just "Jojo") "what is your first name?\nwhat is your last name?\nhello Jojo \n";
+  test "./16_sort" "1.000000 01230ualksjd a a b c n 1 2 4 6 102370 1092381 0-0 1-2\n";
+  test "./17_vec2" "1.414214\n";
+  test "./20_zip" "1 2 3\na b c\na 1 b 2 c 3\n"
