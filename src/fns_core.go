@@ -347,7 +347,7 @@ var builtinCoreFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 				if acc == nil {
 					acc = oldItem
 				} else {
-					acc = EvalNonLazy(fn.EvalRhs([]Value{acc, oldItem}, ew), ew)
+					acc = EvalEager(fn.EvalRhs([]Value{acc, oldItem}, ew), ew)
 					if acc == nil {
 						return nil
 					}
@@ -372,7 +372,7 @@ var builtinCoreFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 			oldItems := lst.Items()
 
 			for _, oldItem := range oldItems {
-				acc = EvalNonLazy(fn.EvalRhs([]Value{acc, oldItem}, ew), ew)
+				acc = EvalEager(fn.EvalRhs([]Value{acc, oldItem}, ew), ew)
 				if acc == nil {
 					return nil
 				}

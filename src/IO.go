@@ -4,12 +4,14 @@ import (
 	"reflect"
 )
 
+type RunFunc func(ioc IOContext) Value
+
 type IO struct {
 	ValueData
-	Run func() Value
+	Run RunFunc
 }
 
-func NewIO(Run func() Value, ctx Context) *IO {
+func NewIO(Run RunFunc, ctx Context) *IO {
 	return &IO{newValueData(ctx), Run}
 }
 

@@ -16,6 +16,10 @@ type File struct {
 	linker   *Linker
 }
 
+func NewReplFile() *File {
+	return &File{"", []*String{}, []*Module{}, []*ScopedFunc{}, make(map[string][]*ScopedFunc), nil}
+}
+
 func (f *File) GetLocal(name string) *Variable {
 	return nil
 }

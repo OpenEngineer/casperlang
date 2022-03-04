@@ -37,17 +37,6 @@ func listAmbiguousFuncs(fns []Func) string {
 	return b.String()
 }
 
-func RunFunc(fn Func, args []Value, ew ErrorWriter, ctx Context) Value {
-	d := fn.Dispatch(args, ew)
-
-	if d == nil || d.Failed() {
-		ew.Add(ctx.Error("failed to run func"))
-		return nil
-	}
-
-	return d.Eval()
-}
-
 func DeferFunc(fn Func, args []Value, ctx Context) Value {
 	return NewDisCall([]Func{fn}, args, ctx)
 }

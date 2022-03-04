@@ -71,6 +71,12 @@ func LoadModule(p *Package, consumers []*Module, dir *String, ew ErrorWriter) *M
 	return m
 }
 
+func LoadReplModule(p *Package, ew ErrorWriter) *Module {
+	files := []*File{NewReplFile()}
+
+	return &Module{"", p, files, nil, nil}
+}
+
 func (m *Module) Dir() string {
 	return m.dir
 }
@@ -262,10 +268,14 @@ func (m *Module) RunEntryPoint(path string, ew ErrorWriter) {
 		fmt.Println("running entry point \"" + name + "\" in \"" + path + "\"")
 	}
 
-	retVal := RunFunc(fn, []Value{}, ew, fn.Context())
-	if !ew.Empty() {
+	d := fn.Dispatch([]Value{}, ew)
+
+	if d == nil || d.Failed() {
+		ew.Add(fn.Context().Error("failed to run func"))
 		return
 	}
+
+	retVal := d.Eval()
 
 	Run(retVal)
 }

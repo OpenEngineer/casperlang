@@ -5,7 +5,7 @@ import (
 	"os"
 )
 
-func EvalNonLazy(v Value, ew ErrorWriter) Value {
+func EvalEager(v Value, ew ErrorWriter) Value {
 	for v != nil {
 		call, ok := v.(Call)
 		if ok {
@@ -22,7 +22,7 @@ func EvalNonLazy(v Value, ew ErrorWriter) Value {
 func Run(v Value) {
 	ew := NewErrorWriter()
 
-	v = EvalNonLazy(v, ew)
+	v = EvalEager(v, ew)
 
 	if v != nil && ew.Empty() {
 		if !IsIO(v) {
@@ -30,7 +30,7 @@ func Run(v Value) {
 		} else {
 			io := AssertIO(v)
 
-			v = io.Run()
+			v = io.Run(NewDefaultIOContext())
 
 			if v != nil {
 				ew.Add(v.Context().Error("unused IO result"))

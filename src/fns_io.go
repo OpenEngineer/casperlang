@@ -51,10 +51,10 @@ var builtinIOFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 		Args: []string{"String"},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
 			return NewIO(
-				func() Value {
+				func(ioc IOContext) Value {
 					str := AssertString(self.args[0]).Value()
 					if len(str) > 0 {
-						fmt.Printf("%s", str)
+						fmt.Fprintf(ioc.Stdout(), "%s", str)
 					}
 					return nil
 				},
@@ -67,17 +67,17 @@ var builtinIOFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 		Args: []string{"IO", "IO"},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
 			return NewIO(
-				func() Value {
+				func(ioc IOContext) Value {
 					a := AssertIO(self.args[0])
 
-					aIO := a.Run()
+					aIO := a.Run(ioc)
 
 					if aIO != nil {
 						ew.Add(self.ctx.Error("unused return value of lhs"))
 						return nil
 					}
 
-					return AssertIO(self.args[1]).Run()
+					return AssertIO(self.args[1]).Run(ioc)
 				},
 				self.ctx,
 			)
@@ -90,8 +90,8 @@ var builtinIOFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 			io := AssertIO(self.args[0])
 
 			return NewIO(
-				func() Value {
-					runResult := io.Run()
+				func(ioc IOContext) Value {
+					runResult := io.Run(ioc)
 					if runResult == nil {
 						return nil
 					}
@@ -105,7 +105,7 @@ var builtinIOFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 					res = ResolveIO(res, fn.Context(), ew)
 
 					if res != nil {
-						return AssertIO(res).Run()
+						return AssertIO(res).Run(ioc)
 					} else {
 						return res
 					}
@@ -119,7 +119,7 @@ var builtinIOFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 		Args: []string{},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
 			return NewIO(
-				func() Value {
+				func(ioc IOContext) Value {
 					scanner := bufio.NewScanner(os.Stdin)
 					scanner.Scan()
 
@@ -134,7 +134,7 @@ var builtinIOFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 		Args: []string{},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
 			return NewIO(
-				func() Value {
+				func(ioc IOContext) Value {
 					items := []Value{}
 					for _, arg := range ARGS {
 						items = append(items, NewString(arg, self.ctx))
@@ -157,7 +157,7 @@ var builtinIOFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 			fname := p.Value()
 
 			return NewIO(
-				func() Value {
+				func(ioc IOContext) Value {
 					// check existence in a a
 					if info, err := os.Stat(fname); os.IsNotExist(err) {
 						return DeferFunc(self.links["Error"][0], []Value{NewString("\""+fname+"\" not found", self.ctx)}, self.ctx)
@@ -190,7 +190,7 @@ var builtinIOFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 			fname := AssertString(a.Args()[0]).Value()
 
 			return NewIO(
-				func() Value {
+				func(ioc IOContext) Value {
 					if info, err := os.Stat(fname); os.IsNotExist(err) {
 						err := ioutil.WriteFile(fname, []byte(data.Value()), 0644)
 						if err != nil {
@@ -222,7 +222,7 @@ var builtinIOFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 			fname := AssertString(a.Args()[0]).Value()
 
 			return NewIO(
-				func() Value {
+				func(ioc IOContext) Value {
 					info, err := os.Stat(fname)
 					if err != nil && !os.IsNotExist(err) {
 						return DeferFunc(self.links["Error"][0], []Value{NewString("can't write \""+fname+"\", access error", self.ctx)}, self.ctx)
@@ -252,7 +252,7 @@ var builtinIOFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 			payload := AssertString(a.Args()[2]).Value()
 
 			return NewIO(
-				func() Value {
+				func(ioc IOContext) Value {
 					if method != "GET" && method != "POST" && method != "PUT" && method != "HEAD" && method != "DELETE" && method != "TRACE" && method != "OPTIONS" && method != "CONNECT" {
 						return DeferFunc(self.links["Error"][0], []Value{NewString("unrecognized http method \""+method+"\"", a.Args()[0].Context())}, a.Args()[0].Context())
 					}

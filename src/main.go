@@ -6,6 +6,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/openengineer/go-terminal"
 )
 
 const NAME = "casper"
@@ -71,16 +73,24 @@ func cmdUsageError(cmd string) error {
 	return errors.New(b.String())
 }
 
+func parseArgs(args []string) ([]string, map[string]string) {
+	options := make(map[string]string)
+
+	return args, options
+}
+
 // XXX: arg parsing could be done with token parser itself
 func main_() error {
-	args := os.Args[1:]
+	// TODO: extract options
+	args, _ := parseArgs(os.Args[1:])
 
 	if len(args) >= 1 && filepath.Ext(args[0]) == ".cas" {
 		ARGS = args
-		return main_runFile(args[0])
-	}
-
-	if len(args) < 2 {
+		main_runFile(args[0])
+		return nil
+	} else if len(args) == 0 {
+		return main_repl()
+	} else if len(args) < 2 {
 		return genUsageError("")
 	}
 
@@ -176,13 +186,28 @@ func main_evalJSON(args []string) error {
 	return nil
 }
 
-func main_runFile(path string) error {
+func main_runFile(path string) {
 	ew := NewErrorWriter()
 
 	RunPackage(path, ew)
 	if !ew.Empty() {
 		printErrorAndQuit(ew.Dump())
 	}
+}
 
-	return nil
+func main_repl() error {
+	fmt.Println("casper repl")
+	fmt.Println("Type \"help\" for more information")
+
+	ew := NewErrorWriter()
+	h := NewRepl(ew)
+	if !ew.Empty() {
+		printErrorAndQuit(ew.Dump())
+	}
+
+	t := terminal.NewTerminal(h)
+
+	h.RegisterTerm(t)
+
+	return t.Run()
 }

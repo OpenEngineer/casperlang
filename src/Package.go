@@ -93,24 +93,17 @@ func listPackageConsumers(downstream []*Package, this *String) string {
 	return b.String()
 }
 
-func LoadPackage(consumers []*Package, dir *String, ew ErrorWriter) *Package {
-	if DEBUG_PKG_LOADING {
-		fmt.Println("loading pkg \"" + dir.Value() + "\"")
-	}
+func LoadConfig(dir *String, ew ErrorWriter) *Dict {
+	var (
+		path string
+		ok   bool
+	)
 
-	for i, consumer := range consumers {
-		if consumer.Dir() == dir.Value() {
-			if i == len(consumers)-1 && consumer.Dir() == dir.Value() {
-				ew.Add(dir.Context().Error("package imports self"))
-				return nil
-			} else {
-				ew.Add(dir.Context().Error("circular package dependency:" + listPackageConsumers(consumers[i:], dir)))
-				return nil
-			}
-		}
+	if dir != nil {
+		path, ok = searchPackageConfig(dir.Value())
+	} else {
+		path, ok = userPackageConfig()
 	}
-
-	path, ok := searchPackageConfig(dir.Value())
 
 	if !ok {
 		ew.Add(errors.New("no \"package.json\" found"))
@@ -137,13 +130,38 @@ func LoadPackage(consumers []*Package, dir *String, ew ErrorWriter) *Package {
 		return nil
 	}
 
+	return AssertDict(v)
+}
+
+func LoadPackage(consumers []*Package, dir *String, ew ErrorWriter) *Package {
+	if DEBUG_PKG_LOADING {
+		fmt.Println("loading pkg \"" + dir.Value() + "\"")
+	}
+
+	for i, consumer := range consumers {
+		if consumer.Dir() == dir.Value() {
+			if i == len(consumers)-1 && consumer.Dir() == dir.Value() {
+				ew.Add(dir.Context().Error("package imports self"))
+				return nil
+			} else {
+				ew.Add(dir.Context().Error("circular package dependency:" + listPackageConsumers(consumers[i:], dir)))
+				return nil
+			}
+		}
+	}
+
+	cfg := LoadConfig(dir, ew)
+	if cfg == nil {
+		return nil
+	}
+
 	if DEBUG_PKG_LOADING {
 		fmt.Println("loaded package \"" + dir.Value() + "\" (unitialized)")
 	}
 
 	return &Package{
 		dir,
-		AssertDict(v),
+		cfg,
 		consumers,
 		make(map[string]*Package),
 		make(map[string]*Module),
@@ -168,6 +186,16 @@ func LoadEntryPackage(dir *String, ew ErrorWriter) *Package {
 		p.AddModule(m, ew)
 	}
 
+	fillPackage(p, ew)
+
+	if !ew.Empty() {
+		return nil
+	}
+
+	return p
+}
+
+func fillPackage(p *Package, ew ErrorWriter) {
 	linker := NewLinker()
 
 	// TODO: search for relevant package.json file
@@ -195,6 +223,34 @@ func LoadEntryPackage(dir *String, ew ErrorWriter) *Package {
 	p.BuildDBs(gScope)
 
 	p.SetLinker(linker)
+}
+
+// contains exactly one module and exactly one file
+func LoadReplPackage(ew ErrorWriter) *Package {
+	cfg := LoadConfig(nil, ew)
+	if cfg == nil {
+		return nil
+	}
+
+	p := &Package{
+		nil,
+		cfg,
+		[]*Package{},
+		make(map[string]*Package),
+		make(map[string]*Module),
+	}
+
+	m := LoadReplModule(p, ew)
+	if !ew.Empty() {
+		return nil
+	}
+
+	// last module to be added
+	if m != nil {
+		p.AddModule(m, ew)
+	}
+
+	fillPackage(p, ew)
 
 	if !ew.Empty() {
 		return nil
