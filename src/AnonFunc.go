@@ -1,6 +1,7 @@
 package main
 
 import (
+	"reflect"
 	"strings"
 )
 
@@ -26,7 +27,7 @@ func AssertAnonFunc(t Value) *AnonFunc {
 	if ok {
 		return f
 	} else {
-		panic("expected *AnonFunc")
+		panic("expected *AnonFunc, got " + reflect.TypeOf(t).String())
 	}
 }
 

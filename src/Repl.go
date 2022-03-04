@@ -1,7 +1,7 @@
 package main
 
 import (
-	"strings"
+	"errors"
 
 	"github.com/openengineer/go-terminal"
 )
@@ -32,6 +32,7 @@ func (r *Repl) RegisterTerm(t *terminal.Terminal) {
 func (r *Repl) Eval(line string) (string, string) {
 	// first tokenize always
 	ew := NewErrorWriter()
+	ioc := NewReplIOContext()
 	s := NewSource("<stdin>", []byte(line))
 
 	ts := Tokenize(s, ew)
@@ -58,59 +59,163 @@ func (r *Repl) Eval(line string) (string, string) {
 		}
 
 		return r.evalImports(strs), line
-	case strings.Contains(line, "="):
-		return "assignments not yet implemented", line
+	case ContainsSymbolBefore(ts[1:], "=", ";"):
+		for len(ts) > 0 && IsSymbol(ts[len(ts)-1], ";") {
+			ts = ts[0 : len(ts)-1]
+		}
+
+		if IsOperatorSymbol(ts[0]) || (IsWord(ts[0]) && !IsSymbol(ts[1], "::")) {
+			fn := parseFunc(ts, ew)
+			if !ew.Empty() {
+				return ew.Dump(), line
+			}
+
+			out_ := ""
+			if fn.NumArgs() == 0 {
+				val, out := r.evalReplValue(fn.body, ioc, ew)
+				if !ew.Empty() {
+					return ew.Dump(), line
+				} else {
+					if val == nil {
+						return "rhs returns nil", line
+					} else {
+						fn.body = val
+						out_ = out
+					}
+				}
+			}
+
+			r.f.AddFunc(fn)
+			fillPackage(r.p, ew)
+			if !ew.Empty() {
+				return ew.Dump(), line
+			} else {
+				return out_, line
+			}
+		} else if !ContainsSymbol(ts, ";") {
+			pat, rhs := parseDestructure(ts, ew)
+			if !ew.Empty() {
+				return ew.Dump(), line
+			}
+
+			pat = pat.Link(NewFuncScope(r.f), ew)
+			if !ew.Empty() {
+				return ew.Dump(), line
+			}
+
+			var out string
+			rhs, out = r.evalReplValue(rhs, ioc, ew)
+			if !ew.Empty() {
+				return ew.Dump(), line
+			} else if rhs == nil {
+				return "rhs is nil", line
+			}
+
+			d := pat.Destructure(rhs, ew)
+			if !ew.Empty() {
+				return ew.Dump(), line
+			} else if d.Failed() {
+				return "couldn't destructure", line
+			}
+
+			for i, var_ := range d.stack.vars {
+				data := d.stack.data[i]
+				name := var_.Name()
+
+				fn := NewUserFunc(NewWord(name, var_.Context()), []Pattern{}, data, var_.Context())
+				r.f.AddFunc(fn)
+				fillPackage(r.p, ew)
+				if !ew.Empty() {
+					return ew.Dump(), line
+				}
+			}
+
+			return out, line
+		} else {
+			val := parseStatements(ts, ew)
+			if !ew.Empty() {
+				return ew.Dump(), line
+			}
+
+			var out string
+			val, out = r.evalReplValue(val, ioc, ew)
+			if !ew.Empty() {
+				return ew.Dump(), line
+			}
+
+			if val != nil {
+				if len(out) > 0 {
+					out += "\n"
+				}
+				out += val.Dump()
+			}
+
+			// should parse as an anonymous function
+			return out, line
+		}
 	default:
 		// expect a regular expression
-		ew := NewErrorWriter()
-		ioc := NewReplIOContext()
-		IO_CONTEXT = ioc
-
 		val := ParseExpr(ts, ew)
 		if !ew.Empty() {
 			return ew.Dump(), line
 		}
 
-		val = val.Link(r.f, ew)
+		val, out := r.evalReplValue(val, ioc, ew)
 		if !ew.Empty() {
 			return ew.Dump(), line
-		}
-
-		val = EvalEager(val, ew)
-		if !ew.Empty() {
-			return ew.Dump(), line
-		} else if ioc.panicMsg != "" {
-			return ioc.panicMsg, line
-		}
-
-		if io, ok := val.(*IO); ok {
-			res := io.Run(ioc)
-
-			out := ioc.StdoutString()
-			if res != nil {
+		} else {
+			if val != nil {
 				if len(out) > 0 {
 					out += "\n"
 				}
-				out += res.Dump()
+				out += val.Dump()
 			}
+
 			return out, line
-		} else {
-			cs := val.Constructors()
-
-			for len(cs) > 0 {
-				n := len(cs)
-
-				if val.TypeName() == "Any" || val.TypeName() == "Maybe" || val.TypeName() == "Path" {
-					val = cs[n-1]
-					cs = cs[0 : n-1]
-				} else {
-					break
-				}
-			}
-
-			return val.Dump(), line
 		}
 	}
+}
+
+func (r *Repl) evalReplValue(val Value, ioc *ReplIOContext, ew ErrorWriter) (Value, string) {
+	IO_CONTEXT = ioc
+
+	val = val.Link(r.f, ew)
+	if !ew.Empty() {
+		return nil, ""
+	}
+
+	val = EvalEager(val, ew)
+	if !ew.Empty() {
+		return nil, ""
+	} else if ioc.panicMsg != "" {
+		ew.Add(errors.New(ioc.panicMsg))
+		return nil, ""
+	}
+
+	if io, ok := val.(*IO); ok {
+		res := io.Run(ioc)
+
+		return res, ioc.StdoutString()
+	} else {
+		return prettyValue(val), ""
+	}
+}
+
+func prettyValue(val Value) Value {
+	cs := val.Constructors()
+
+	for len(cs) > 0 {
+		n := len(cs)
+
+		if val.TypeName() == "Any" || val.TypeName() == "Maybe" || val.TypeName() == "Path" {
+			val = cs[n-1]
+			cs = cs[0 : n-1]
+		} else {
+			break
+		}
+	}
+
+	return val
 }
 
 func (r *Repl) evalImports(paths []*String) string {

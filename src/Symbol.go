@@ -136,6 +136,28 @@ func IsOperatorSymbol(t_ Token) bool {
 	}
 }
 
+func ContainsSymbol(ts []Token, symbol string) bool {
+	for _, t := range ts {
+		if IsSymbol(t, symbol) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func ContainsSymbolBefore(ts []Token, symbol string, other string) bool {
+	for _, t := range ts {
+		if IsSymbol(t, other) {
+			return false
+		} else if IsSymbol(t, symbol) {
+			return true
+		}
+	}
+
+	return false
+}
+
 func (open *Symbol) IsGroupMatch(close_ *Symbol) bool {
 	switch open.Value() {
 	case "(":
