@@ -39,7 +39,7 @@ func (ew *ErrorWriterData) Dump() string {
 			if i > 0 {
 				break
 			}
-		} else {
+		} else if !strings.HasPrefix(err.Error(), "Error: ") {
 			b.WriteString("Error: ")
 		}
 

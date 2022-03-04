@@ -13,27 +13,15 @@ func (fn *WrappedFunc) SetFunc(fn_ Func) {
 }
 
 func (fn *WrappedFunc) Dump() string {
-	if fn.fn == nil {
-		return "<wrappedfunc>"
-	} else {
-		return fn.fn.Dump()
-	}
+	return fn.fn.Dump()
 }
 
 func (fn *WrappedFunc) Context() Context {
-	if fn.fn == nil {
-		return NewSpecialContext("<wrappedfunc>")
-	} else {
-		return fn.fn.Context()
-	}
+	return fn.fn.Context()
 }
 
 func (fn *WrappedFunc) Name() string {
-	if fn.fn == nil {
-		return "<wrappedfunc>"
-	} else {
-		return fn.fn.Name()
-	}
+	return fn.fn.Name()
 }
 
 func (fn *WrappedFunc) NumArgs() int {
@@ -53,11 +41,7 @@ func (fn *WrappedFunc) Dispatch(args []Value, ew ErrorWriter) *Dispatched {
 }
 
 func (fn *WrappedFunc) Link(scope Scope, ew ErrorWriter) Func {
-	if fn.fn == nil {
-		return fn
-	} else {
-		return fn.fn.Link(scope, ew)
-	}
+	return fn
 }
 
 func (fn *WrappedFunc) EvalRhs(d *Dispatched) Value {

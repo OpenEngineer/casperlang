@@ -32,7 +32,6 @@ func (r *Repl) RegisterTerm(t *terminal.Terminal) {
 func (r *Repl) Eval(line string) (string, string) {
 	// first tokenize always
 	ew := NewErrorWriter()
-	ioc := NewReplIOContext()
 	s := NewSource("<stdin>", []byte(line))
 
 	ts := Tokenize(s, ew)
@@ -48,193 +47,167 @@ func (r *Repl) Eval(line string) (string, string) {
 
 	switch {
 	case IsWord(ts[0], "import"):
-		strs := []*String{}
-
-		for _, t := range ts[1:] {
-			if str, ok := t.(*String); ok {
-				strs = append(strs, str)
-			} else {
-				return t.Context().Error("invalid import statement").Error(), line
-			}
-		}
-
-		return r.evalImports(strs), line
+		return r.evalImports(ts, ew), line
 	case ContainsSymbolBefore(ts[1:], "=", ";"):
-		for len(ts) > 0 && IsSymbol(ts[len(ts)-1], ";") {
-			ts = ts[0 : len(ts)-1]
-		}
-
+		// regular function definition
 		if IsOperatorSymbol(ts[0]) || (IsWord(ts[0]) && !IsSymbol(ts[1], "::")) {
-			fn := parseFunc(ts, ew)
-			if !ew.Empty() {
-				return ew.Dump(), line
-			}
-
-			out_ := ""
-			if fn.NumArgs() == 0 {
-				val, out := r.evalReplValue(fn.body, ioc, ew)
-				if !ew.Empty() {
-					return ew.Dump(), line
-				} else {
-					if val == nil {
-						return "rhs returns nil", line
-					} else {
-						fn.body = val
-						out_ = out
-					}
-				}
-			}
-
-			r.f.AddFunc(fn)
-			fillPackage(r.p, ew)
-			if !ew.Empty() {
-				return ew.Dump(), line
-			} else {
-				return out_, line
-			}
-		} else if !ContainsSymbol(ts, ";") {
-			pat, rhs := parseDestructure(ts, ew)
-			if !ew.Empty() {
-				return ew.Dump(), line
-			}
-
-			pat = pat.Link(NewFuncScope(r.f), ew)
-			if !ew.Empty() {
-				return ew.Dump(), line
-			}
-
-			var out string
-			rhs, out = r.evalReplValue(rhs, ioc, ew)
-			if !ew.Empty() {
-				return ew.Dump(), line
-			} else if rhs == nil {
-				return "rhs is nil", line
-			}
-
-			d := pat.Destructure(rhs, ew)
-			if !ew.Empty() {
-				return ew.Dump(), line
-			} else if d.Failed() {
-				return "couldn't destructure", line
-			}
-
-			for i, var_ := range d.stack.vars {
-				data := d.stack.data[i]
-				name := var_.Name()
-
-				fn := NewUserFunc(NewWord(name, var_.Context()), []Pattern{}, data, var_.Context())
-				r.f.AddFunc(fn)
-				fillPackage(r.p, ew)
-				if !ew.Empty() {
-					return ew.Dump(), line
-				}
-			}
-
-			return out, line
-		} else {
-			val := parseStatements(ts, ew)
-			if !ew.Empty() {
-				return ew.Dump(), line
-			}
-
-			var out string
-			val, out = r.evalReplValue(val, ioc, ew)
-			if !ew.Empty() {
-				return ew.Dump(), line
-			}
-
-			if val != nil {
-				if len(out) > 0 {
-					out += "\n"
-				}
-				out += val.Dump()
-			}
-
-			// should parse as an anonymous function
-			return out, line
+			return r.defFunc(ts, ew), line
+		} else { // a destructure split at the first =
+			return r.evalDestructure(ts, ew), line
 		}
 	default:
-		// expect a regular expression
-		val := ParseExpr(ts, ew)
-		if !ew.Empty() {
-			return ew.Dump(), line
-		}
-
-		val, out := r.evalReplValue(val, ioc, ew)
-		if !ew.Empty() {
-			return ew.Dump(), line
-		} else {
-			if val != nil {
-				if len(out) > 0 {
-					out += "\n"
-				}
-				out += val.Dump()
-			}
-
-			return out, line
-		}
+		return r.evalExpr(ts, ew), line
 	}
 }
 
-func (r *Repl) evalReplValue(val Value, ioc *ReplIOContext, ew ErrorWriter) (Value, string) {
-	IO_CONTEXT = ioc
-
+func (r *Repl) linkAndEval(val Value, ew ErrorWriter) Value {
 	val = val.Link(r.f, ew)
 	if !ew.Empty() {
-		return nil, ""
+		return nil
 	}
 
 	val = EvalEager(val, ew)
 	if !ew.Empty() {
-		return nil, ""
-	} else if ioc.panicMsg != "" {
-		ew.Add(errors.New(ioc.panicMsg))
-		return nil, ""
+		return nil
+	} else if PANIC != "" {
+		ew.Add(errors.New(PANIC))
+		return nil
 	}
 
-	if io, ok := val.(*IO); ok {
-		res := io.Run(ioc)
-
-		return res, ioc.StdoutString()
-	} else {
-		return prettyValue(val), ""
-	}
+	return EvalPretty(val)
 }
 
-func prettyValue(val Value) Value {
-	cs := val.Constructors()
+func (r *Repl) evalImports(ts []Token, ew ErrorWriter) string {
+	strs := []*String{}
 
-	for len(cs) > 0 {
-		n := len(cs)
-
-		if val.TypeName() == "Any" || val.TypeName() == "Maybe" || val.TypeName() == "Path" {
-			val = cs[n-1]
-			cs = cs[0 : n-1]
+	for _, t := range ts[1:] {
+		if str, ok := t.(*String); ok {
+			strs = append(strs, str)
 		} else {
-			break
+			return t.Context().Error("invalid import statement").Error()
 		}
 	}
 
-	return val
+	return r.addImports(strs, ew)
 }
 
-func (r *Repl) evalImports(paths []*String) string {
+func (r *Repl) addImports(paths []*String, ew ErrorWriter) string {
 	for _, path := range paths {
 		r.f.AddImport(path)
 	}
-
-	ew := NewErrorWriter()
 
 	r.f.GetModules(r.p, []*Module{}, ew)
 	if !ew.Empty() {
 		return ew.Dump()
 	}
 
-	fillPackage(r.p, ew)
-
+	r.p.RegisterFuncs(ew)
 	if !ew.Empty() {
 		return ew.Dump()
 	} else {
 		return ""
+	}
+}
+
+func (r *Repl) defFunc(ts []Token, ew ErrorWriter) string {
+	fn := parseFunc(ts, ew)
+	if !ew.Empty() {
+		return ew.Dump()
+	}
+
+	r.f.AddFunc(fn)
+	r.p.RegisterFuncs(ew) // register everything in to have recursive funcs
+
+	n := len(r.f.fns)
+	// force linking now, not upon call
+	if ew.Empty() {
+		r.f.fns[n-1].fn = fn.Link(r.f, ew)
+	}
+
+	if !ew.Empty() {
+		r.f.fns = r.f.fns[0 : n-1] // remove the last one
+		r.p.RegisterFuncs(ew)
+		return ew.Dump()
+	}
+
+	return ""
+}
+
+func (r *Repl) evalDestructure(ts []Token, ew ErrorWriter) string {
+	pat, rhs := parseDestructure(ts, ew)
+	if !ew.Empty() {
+		return ew.Dump()
+	}
+
+	pat = pat.Link(NewFuncScope(r.f), ew)
+	if !ew.Empty() {
+		return ew.Dump()
+	}
+
+	rhs = r.linkAndEval(rhs, ew)
+	if !ew.Empty() {
+		return ew.Dump()
+	} else if rhs == nil {
+		panic("unexpected")
+	}
+
+	d := pat.Destructure(rhs, ew)
+	if !ew.Empty() {
+		return ew.Dump()
+	} else if d.Failed() {
+		return "couldn't destructure"
+	}
+
+	for _, var_ := range d.stack.vars {
+		name := var_.Name()
+
+		for _, check := range r.f.fns {
+			if check.Name() == name && check.NumArgs() == 0 {
+				return "\"" + name + "\" already defined"
+			}
+		}
+	}
+
+	for i, var_ := range d.stack.vars {
+		data := d.stack.data[i]
+		name := var_.Name()
+
+		fn := NewUserFunc(NewWord(name, var_.Context()), []Pattern{}, data, var_.Context())
+		r.f.AddFunc(fn)
+		r.p.RegisterFuncs(ew)
+		if !ew.Empty() {
+			return ew.Dump()
+		}
+	}
+
+	return ""
+}
+
+func (r *Repl) evalExpr(ts []Token, ew ErrorWriter) string {
+	// expect a regular expression
+	val := ParseExpr(ts, ew)
+	if !ew.Empty() {
+		return ew.Dump()
+	}
+
+	out := ""
+	val = r.linkAndEval(val, ew)
+	if !ew.Empty() {
+		return ew.Dump()
+	} else {
+		if io, ok := val.(*IO); ok {
+			ioc := NewReplIOContext()
+			val = io.Run(ioc)
+			out += ioc.StdoutString()
+		}
+
+		if val != nil {
+			if len(out) > 0 {
+				out += "\n"
+			}
+			out += val.Dump()
+		}
+
+		return out
 	}
 }

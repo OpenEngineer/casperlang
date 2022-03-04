@@ -196,14 +196,16 @@ func main_runFile(path string) {
 }
 
 func main_repl() error {
-	fmt.Println("casper repl")
-	fmt.Println("Type \"help\" for more information")
+	TARGET = "repl"
 
 	ew := NewErrorWriter()
 	h := NewRepl(ew)
 	if !ew.Empty() {
 		printErrorAndQuit(ew.Dump())
 	}
+
+	fmt.Println("Welcome to Casper")
+	fmt.Println("Type \"help\" for more information")
 
 	t := terminal.NewTerminal(h)
 

@@ -56,7 +56,7 @@ func LoadModule(p *Package, consumers []*Module, dir *String, ew ErrorWriter) *M
 	}
 
 	if len(files) == 0 {
-		ew.Add(errors.New("module " + dir.Value() + " doesn't contain any source files"))
+		ew.Add(errors.New("module \"" + dir.Value() + "\" doesn't contain any source files"))
 		return nil
 	}
 
@@ -281,11 +281,30 @@ func (m *Module) RunEntryPoint(path string, ew ErrorWriter) {
 	if d == nil || d.Failed() {
 		ew.Add(fn.Context().Error("failed to run func"))
 		return
+	} else if !ew.Empty() {
+		return
 	}
 
-	retVal := d.Eval()
+	{
+		v := d.Eval()
+		v = EvalEager(v, ew)
 
-	Run(retVal)
+		if v != nil && ew.Empty() {
+			if !IsIO(v) {
+				ew.Add(v.Context().Error("expected IO, got " + v.Dump()))
+			} else {
+				io := AssertIO(v)
+
+				v = io.Run(NewDefaultIOContext())
+
+				if v != nil {
+					ew.Add(v.Context().Error("unused IO result"))
+				}
+			}
+		}
+	}
+
+	return
 }
 
 func (m *Module) DumpFuncs() string {

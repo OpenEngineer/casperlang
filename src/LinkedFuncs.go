@@ -14,7 +14,7 @@ func (s *Linker) LinkFunc(fn Func, scope Scope, ew ErrorWriter) Func {
 		return l
 	} else {
 		// add something temporary to the list (for recursive links)
-		tmp := NewWrappedFunc(nil)
+		tmp := NewWrappedFunc(fn) // use fn, because at least its header can be used
 
 		s.linked[fn] = tmp
 

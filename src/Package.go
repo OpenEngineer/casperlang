@@ -186,8 +186,7 @@ func LoadEntryPackage(dir *String, ew ErrorWriter) *Package {
 		p.AddModule(m, ew)
 	}
 
-	fillPackage(p, ew)
-
+	p.RegisterFuncs(ew)
 	if !ew.Empty() {
 		return nil
 	}
@@ -195,7 +194,8 @@ func LoadEntryPackage(dir *String, ew ErrorWriter) *Package {
 	return p
 }
 
-func fillPackage(p *Package, ew ErrorWriter) {
+func (p *Package) RegisterFuncs(ew ErrorWriter) {
+	// fresh linker
 	linker := NewLinker()
 
 	// TODO: search for relevant package.json file
@@ -250,8 +250,7 @@ func LoadReplPackage(ew ErrorWriter) *Package {
 		p.AddModule(m, ew)
 	}
 
-	fillPackage(p, ew)
-
+	p.RegisterFuncs(ew)
 	if !ew.Empty() {
 		return nil
 	}

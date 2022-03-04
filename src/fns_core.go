@@ -8,6 +8,13 @@ import (
 	"strconv"
 )
 
+// possible targets:
+//  * default
+//  * repl
+var TARGET = "default"
+
+var PANIC = ""
+
 // basic builtin manipulation functions, should be avaiable on all target platforms
 var builtinCoreFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 	BuiltinFuncConfig{
@@ -601,10 +608,9 @@ var builtinCoreFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 		Name: "panic",
 		Args: []string{"String"},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
-			// TODO: this is bad hack (how else can we do this?)
 			msg := self.ctx.Error(AssertString(self.args[0]).Value()).Error()
-			if IO_CONTEXT != nil {
-				IO_CONTEXT.Panic(msg)
+			if TARGET == "repl" {
+				PANIC = msg
 			} else {
 				fmt.Fprintf(os.Stderr, "%s\n", msg)
 				os.Exit(1)

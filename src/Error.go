@@ -28,8 +28,8 @@ func AssertError(e_ error) *Error {
 }
 
 func (e *Error) Error() string {
-	if e.ctx.src.Path() == "<stdin>" {
-		return e.ctx.start.ToString() + ": " + e.msg
+	if TARGET == "repl" {
+		return "Error: " + e.msg
 	} else if strings.HasPrefix(e.ctx.src.Path(), "<") {
 		return writeError(e.ctx.src, e.ctx.end, e.msg, false)
 	} else if e.end {
