@@ -63,6 +63,8 @@ func (r *Repl) Eval(line string) (string, string) {
 	default:
 		// expect a regular expression
 		ew := NewErrorWriter()
+		ioc := NewReplIOContext()
+		IO_CONTEXT = ioc
 
 		val := ParseExpr(ts, ew)
 		if !ew.Empty() {
@@ -77,23 +79,57 @@ func (r *Repl) Eval(line string) (string, string) {
 		val = EvalEager(val, ew)
 		if !ew.Empty() {
 			return ew.Dump(), line
+		} else if ioc.panicMsg != "" {
+			return ioc.panicMsg, line
 		}
 
 		if io, ok := val.(*IO); ok {
-			ioc := NewReplIOContext()
 			res := io.Run(ioc)
 
 			out := ioc.StdoutString()
 			if res != nil {
-				out += "\n" + res.Dump()
+				if len(out) > 0 {
+					out += "\n"
+				}
+				out += res.Dump()
 			}
 			return out, line
 		} else {
+			cs := val.Constructors()
+
+			for len(cs) > 0 {
+				n := len(cs)
+
+				if val.TypeName() == "Any" || val.TypeName() == "Maybe" || val.TypeName() == "Path" {
+					val = cs[n-1]
+					cs = cs[0 : n-1]
+				} else {
+					break
+				}
+			}
+
 			return val.Dump(), line
 		}
 	}
 }
 
 func (r *Repl) evalImports(paths []*String) string {
-	return "import not yet implemented"
+	for _, path := range paths {
+		r.f.AddImport(path)
+	}
+
+	ew := NewErrorWriter()
+
+	r.f.GetModules(r.p, []*Module{}, ew)
+	if !ew.Empty() {
+		return ew.Dump()
+	}
+
+	fillPackage(r.p, ew)
+
+	if !ew.Empty() {
+		return ew.Dump()
+	} else {
+		return ""
+	}
 }

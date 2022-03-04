@@ -260,7 +260,11 @@ func LoadReplPackage(ew ErrorWriter) *Package {
 }
 
 func (p *Package) Dir() string {
-	return p.dir.Value()
+	if p.dir == nil {
+		return "" // nowhere
+	} else {
+		return p.dir.Value()
+	}
 }
 
 func (p *Package) GetLocalModule(path *String, consumers []*Module, ew ErrorWriter) *Module {
@@ -375,7 +379,7 @@ func checkGitPackage(name *Word, raw *Dict, ew ErrorWriter) *String {
 
 func (p *Package) GetPackage(name *Word, ew ErrorWriter) *Package {
 	path := p.depNameToPath(name, ew)
-	if !ew.Empty() {
+	if path == nil || !ew.Empty() {
 		return nil
 	}
 

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"os"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -43,12 +44,35 @@ func (f *File) ListDispatchable(name string, nArgs int, ew ErrorWriter) []Func {
 	}
 }
 
+func (f *File) Dir() string {
+	if f.path == "" {
+		return f.Path()
+	} else {
+		return filepath.Dir(f.path)
+	}
+}
+
 // should be abs path
 func (f *File) Path() string {
-	return f.path
+	if f.path == "" {
+		pwd, err := os.Getwd()
+		if err != nil {
+			panic(err)
+		}
+
+		return pwd
+	} else {
+		return f.path
+	}
 }
 
 func (f *File) AddImport(imp *String) {
+	for _, check := range f.imports {
+		if check.Value() == imp.Value() {
+			return
+		}
+	}
+
 	f.imports = append(f.imports, imp)
 }
 
@@ -91,11 +115,18 @@ func isAbsPath(path string) bool {
 }
 
 func (f *File) GetModules(p *Package, consumers []*Module, ew ErrorWriter) {
-	for _, imp := range f.imports {
+	toRemove := []int{}
+	for i, imp := range f.imports {
 		var imodule *Module
 
+		if imp.Value() == "." {
+			imp = NewString("./", imp.Context())
+		} else if imp.Value() == ".." {
+			imp = NewString("../", imp.Context())
+		}
+
 		if isRelPath(imp.Value()) {
-			impAbs := NewString(filepath.Clean(filepath.Join(filepath.Dir(f.path), imp.Value())), imp.Context())
+			impAbs := NewString(filepath.Clean(filepath.Join(f.Dir(), imp.Value())), imp.Context())
 			imodule = p.GetLocalModule(impAbs, consumers, ew)
 		} else if isAbsPath(imp.Value()) {
 			impAbs := NewString(filepath.Clean(filepath.Join(p.Dir(), imp.Value())), imp.Context())
@@ -105,15 +136,44 @@ func (f *File) GetModules(p *Package, consumers []*Module, ew ErrorWriter) {
 		}
 
 		if imodule != nil {
-			f.imodules = append(f.imodules, imodule)
+			found := false
+			for _, check := range f.imodules {
+				if check == imodule {
+					found = true
+				}
+			}
+
+			if !found {
+				f.imodules = append(f.imodules, imodule)
+			}
+		} else {
+			toRemove = append(toRemove, i)
 		}
+	}
+
+	if len(toRemove) > 0 {
+		filteredImports := []*String{}
+
+	Outer:
+		for i, imp := range f.imports {
+
+			for _, check := range toRemove {
+				if i == check {
+					continue Outer
+				}
+			}
+
+			filteredImports = append(filteredImports, imp)
+		}
+
+		f.imports = filteredImports
 	}
 }
 
 func (f *File) ImportFuncs(ew ErrorWriter) {
 	for _, imodule := range f.imodules {
 		impFns := imodule.GetExportedFuncs()
-		f.fns = append(f.fns, impFns...)
+		f.PushMethods(impFns)
 	}
 }
 

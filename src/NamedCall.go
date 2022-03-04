@@ -39,8 +39,16 @@ func (v *NamedCall) Link(scope Scope, ew ErrorWriter) Value {
 	} else {
 		fns := scope.ListDispatchable(v.Name(), v.NumArgs(), ew)
 		if len(fns) == 0 {
-			ew.Add(v.name.Context().Error("\"" + v.Name() + "\" undefined"))
-			return v
+
+			fns = scope.ListDispatchable(v.Name(), -1, ew)
+
+			if len(fns) == 0 {
+				ew.Add(v.name.Context().Error("\"" + v.Name() + "\" undefined"))
+				return v
+			} else {
+				ew.Add(v.name.Context().Error(badDispatchMessage(v.Name(), v.Args(), "unable to dispatch", fns)))
+				return v
+			}
 		}
 
 		args := v.linkArgs(scope, ew)

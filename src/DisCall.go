@@ -41,13 +41,13 @@ func (t *DisCall) Link(scope Scope, ew ErrorWriter) Value {
 	return t
 }
 
-func (t *DisCall) badDispatchMessage(msg string, fns []Func) string {
+func badDispatchMessage(name string, args []Value, msg string, fns []Func) string {
 	var b strings.Builder
 
 	b.WriteString(msg)
 	b.WriteString(" (")
-	b.WriteString(t.Name())
-	for _, arg := range t.Args() {
+	b.WriteString(name)
+	for _, arg := range args {
 		b.WriteString(" ")
 		tn := arg.TypeName()
 		if tn == "" {
@@ -69,6 +69,10 @@ func (t *DisCall) badDispatchMessage(msg string, fns []Func) string {
 	}
 
 	return b.String()
+}
+
+func (t *DisCall) badDispatchMessage(msg string, fns []Func) string {
+	return badDispatchMessage(t.Name(), t.Args(), msg, fns)
 }
 
 func (t *DisCall) SubVars(stack *Stack) Value {

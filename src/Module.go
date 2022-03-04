@@ -89,8 +89,16 @@ func (m *Module) MergeFuncs() {
 	allFns := []*ScopedFunc{}
 
 	for _, f := range m.files {
-		allFns = append(allFns, f.fns...)
+	Outer:
+		for _, fn := range f.fns {
+			for _, check := range allFns {
+				if check == fn {
+					continue Outer
+				}
+			}
 
+			allFns = append(allFns, fn)
+		}
 	}
 
 	exported := []*ScopedFunc{}
