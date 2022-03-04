@@ -5,3 +5,6 @@ main: ./build/casper
 
 ./build:
 	mkdir -p ./build
+
+install: ./build/casper
+	sudo cp ./build/casper /usr/local/bin/casper
