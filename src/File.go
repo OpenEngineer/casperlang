@@ -225,9 +225,7 @@ func (f *File) SetLinker(linker *Linker) {
 	f.linker = linker
 }
 
-func (f *File) DumpFuncs() string {
-	var b strings.Builder
-
+func (f *File) ListNames() []string {
 	keys := []string{}
 	for k, _ := range f.db {
 		keys = append(keys, k)
@@ -235,6 +233,13 @@ func (f *File) DumpFuncs() string {
 
 	sort.Strings(keys)
 
+	return keys
+}
+
+func (f *File) DumpFuncs() string {
+	keys := f.ListNames()
+
+	var b strings.Builder
 	for i, k := range keys {
 		lst := f.db[k]
 		for j, fn := range lst {

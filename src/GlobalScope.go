@@ -29,15 +29,17 @@ func (s *GlobalScope) ListDispatchable(name string, numArgs int, ew ErrorWriter)
 
 func registerBuiltinFuncs(db map[string][]Func, fns []BuiltinFuncConfig) {
 	for _, fnCfg := range fns {
-		name := fnCfg.Name
-		lst, ok := db[name]
-		if !ok {
-			lst = []Func{}
+		if fnCfg.Allowed() {
+			name := fnCfg.Name
+			lst, ok := db[name]
+			if !ok {
+				lst = []Func{}
+			}
+
+			lst = append(lst, NewBuiltinFunc(fnCfg))
+
+			db[name] = lst
 		}
-
-		lst = append(lst, NewBuiltinFunc(fnCfg))
-
-		db[name] = lst
 	}
 }
 
@@ -58,9 +60,12 @@ func registerUserFuncs(db map[string][]Func, fns []*UserFunc) {
 
 func fillCoreDB() map[string][]Func {
 	db := make(map[string][]Func)
+
 	registerBuiltinFuncs(db, builtinCoreFuncs)
 	registerBuiltinFuncs(db, builtinIOFuncs)
 	registerBuiltinFuncs(db, builtinMathFuncs)
+	registerBuiltinFuncs(db, builtinReplFuncs)
+
 	return db
 }
 

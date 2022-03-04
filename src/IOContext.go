@@ -16,6 +16,7 @@ type DefaultIOContext struct {
 
 type ReplIOContext struct {
 	stdout *bytes.Buffer
+	repl   *Repl
 }
 
 func NewDefaultIOContext() *DefaultIOContext {
@@ -24,9 +25,10 @@ func NewDefaultIOContext() *DefaultIOContext {
 	}
 }
 
-func NewReplIOContext() *ReplIOContext {
+func NewReplIOContext(repl *Repl) *ReplIOContext {
 	return &ReplIOContext{
 		stdout: &bytes.Buffer{},
+		repl:   repl,
 	}
 }
 
@@ -40,4 +42,17 @@ func (c *ReplIOContext) Stdout() io.Writer {
 
 func (c *ReplIOContext) StdoutString() string {
 	return string(c.stdout.Bytes())
+}
+
+func (c *ReplIOContext) ListNames() []string {
+	return c.repl.f.ListNames()
+}
+
+func AssertReplIOContext(ioc_ IOContext) *ReplIOContext {
+	ioc, ok := ioc_.(*ReplIOContext)
+	if ok {
+		return ioc
+	} else {
+		panic("expected *ReplIOContext")
+	}
 }

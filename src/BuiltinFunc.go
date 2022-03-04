@@ -54,6 +54,12 @@ func (f *BuiltinFunc) DumpHead() string {
 	return head.Dump()
 }
 
+func (f *BuiltinFunc) DumpPrettyHead() string {
+	head := f.header()
+
+	return head.DumpPretty()
+}
+
 func (f *BuiltinFunc) ListHeaderTypes() []string {
 	return []string{}
 }

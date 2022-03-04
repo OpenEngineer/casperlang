@@ -75,6 +75,31 @@ func (h *FuncHeader) Dump() string {
 	return b.String()
 }
 
+func (h *FuncHeader) DumpPretty() string {
+	var b strings.Builder
+
+	if h.IsAnon() {
+		b.WriteString("\\(")
+	} else {
+		b.WriteString(h.Name())
+		b.WriteString(" ")
+	}
+
+	for i, arg := range h.args {
+		if i > 0 {
+			b.WriteString(" ")
+		}
+
+		b.WriteString(arg.DumpPretty())
+	}
+
+	if h.IsAnon() {
+		b.WriteString(")")
+	}
+
+	return b.String()
+}
+
 func (h *FuncHeader) DumpArgs() string {
 	var b strings.Builder
 

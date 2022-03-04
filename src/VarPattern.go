@@ -14,6 +14,10 @@ func (t *VarPattern) Dump() string {
 	return t.var_.Dump() + "::" + t.pattern.Dump()
 }
 
+func (t *VarPattern) DumpPretty() string {
+	return t.pattern.DumpPretty()
+}
+
 func (p *VarPattern) ListTypes() []string {
 	return p.pattern.ListTypes()
 }

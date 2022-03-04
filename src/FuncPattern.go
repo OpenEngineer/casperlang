@@ -17,6 +17,10 @@ func (p *FuncPattern) Dump() string {
 	return "\\" + strconv.Itoa(p.nArgs)
 }
 
+func (p *FuncPattern) DumpPretty() string {
+	return p.Dump()
+}
+
 func (p *FuncPattern) Context() Context {
 	return p.ctx
 }

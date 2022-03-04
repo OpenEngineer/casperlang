@@ -32,6 +32,10 @@ func (fn *WrappedFunc) DumpHead() string {
 	return fn.fn.DumpHead()
 }
 
+func (fn *WrappedFunc) DumpPrettyHead() string {
+	return fn.fn.DumpPrettyHead()
+}
+
 func (fn *WrappedFunc) ListHeaderTypes() []string {
 	return fn.fn.ListHeaderTypes()
 }

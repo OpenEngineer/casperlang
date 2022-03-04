@@ -13,6 +13,10 @@ func (p *PrimPattern) Dump() string {
 	return p.name
 }
 
+func (p *PrimPattern) DumpPretty() string {
+	return p.Dump()
+}
+
 func (p *PrimPattern) Context() Context {
 	return p.ctx
 }

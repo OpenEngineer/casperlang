@@ -16,6 +16,10 @@ func (p *ListPattern) Dump() string {
 	return "([] " + p.inner.Dump() + ")"
 }
 
+func (p *ListPattern) DumpPretty() string {
+	return "([] " + p.inner.DumpPretty() + ")"
+}
+
 func (p *ListPattern) ListTypes() []string {
 	return p.inner.ListTypes()
 }

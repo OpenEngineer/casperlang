@@ -29,6 +29,10 @@ func (f *ScopedFunc) DumpHead() string {
 	return f.fn.DumpHead()
 }
 
+func (f *ScopedFunc) DumpPrettyHead() string {
+	return f.fn.DumpPrettyHead()
+}
+
 func (f *ScopedFunc) Link(_ Scope, ew ErrorWriter) Func {
 	return f.fn.Link(f.scope, ew)
 }

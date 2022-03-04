@@ -34,6 +34,10 @@ func (f *FuncData) DumpHead() string {
 	return f.head.Dump()
 }
 
+func (f *FuncData) DumpPrettyHead() string {
+	return f.head.DumpPretty()
+}
+
 func (f *FuncData) ListHeaderTypes() []string {
 	return f.head.ListTypes()
 }

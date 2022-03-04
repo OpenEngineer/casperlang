@@ -71,6 +71,7 @@ func (r *Repl) linkAndEval(val Value, ew ErrorWriter) Value {
 		return nil
 	} else if PANIC != "" {
 		ew.Add(errors.New(PANIC))
+		PANIC = ""
 		return nil
 	}
 
@@ -113,6 +114,14 @@ func (r *Repl) defFunc(ts []Token, ew ErrorWriter) string {
 	fn := parseFunc(ts, ew)
 	if !ew.Empty() {
 		return ew.Dump()
+	}
+
+	headHash := fn.DumpPrettyHead()
+	for _, check := range r.f.fns {
+		if check.Name() == fn.Name() && check.NumArgs() == fn.NumArgs() && check.DumpPrettyHead() == headHash {
+			ew.Add(errors.New("\"" + headHash + "\" already defined"))
+			return ew.Dump()
+		}
 	}
 
 	r.f.AddFunc(fn)
@@ -163,7 +172,8 @@ func (r *Repl) evalDestructure(ts []Token, ew ErrorWriter) string {
 
 		for _, check := range r.f.fns {
 			if check.Name() == name && check.NumArgs() == 0 {
-				return "\"" + name + "\" already defined"
+				ew.Add(errors.New("\"" + name + "\" already defined"))
+				return ew.Dump()
 			}
 		}
 	}
@@ -196,7 +206,7 @@ func (r *Repl) evalExpr(ts []Token, ew ErrorWriter) string {
 		return ew.Dump()
 	} else {
 		if io, ok := val.(*IO); ok {
-			ioc := NewReplIOContext()
+			ioc := NewReplIOContext(r)
 			val = io.Run(ioc)
 			out += ioc.StdoutString()
 		}
@@ -210,4 +220,8 @@ func (r *Repl) evalExpr(ts []Token, ew ErrorWriter) string {
 
 		return out
 	}
+}
+
+func (r *Repl) Quit() {
+	r.t.Quit()
 }

@@ -8,6 +8,7 @@ type Func interface {
 	Name() string // empty for anonymous functions
 	NumArgs() int
 	DumpHead() string
+	DumpPrettyHead() string
 	ListHeaderTypes() []string
 
 	// args should be detached at this point

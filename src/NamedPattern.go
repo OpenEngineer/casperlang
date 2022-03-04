@@ -33,6 +33,10 @@ func (t *NamedPattern) Dump() string {
 	return t.Name() + "::" + t.pattern.Dump()
 }
 
+func (t *NamedPattern) DumpPretty() string {
+	return t.pattern.DumpPretty()
+}
+
 func (p *NamedPattern) ListTypes() []string {
 	return p.pattern.ListTypes()
 }

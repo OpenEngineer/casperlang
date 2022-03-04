@@ -31,6 +31,22 @@ func (t *TuplePattern) Dump() string {
 	return b.String()
 }
 
+func (t *TuplePattern) DumpPretty() string {
+	var b strings.Builder
+
+	b.WriteString("[")
+	for i, item := range t.items {
+		b.WriteString(item.DumpPretty())
+
+		if i < len(t.items)-1 {
+			b.WriteString(",")
+		}
+	}
+	b.WriteString("]")
+
+	return b.String()
+}
+
 func (p *TuplePattern) ListTypes() []string {
 	lst := []string{}
 

@@ -38,6 +38,26 @@ func (t *StructPattern) Dump() string {
 	return b.String()
 }
 
+func (t *StructPattern) DumpPretty() string {
+	var b strings.Builder
+
+	b.WriteString("{")
+
+	for i, k := range t.keys {
+		b.WriteString(k.Dump())
+		b.WriteString(":")
+		b.WriteString(t.vals[i].DumpPretty())
+
+		if i < len(t.keys)-1 {
+			b.WriteString(",")
+		}
+	}
+
+	b.WriteString("}")
+
+	return b.String()
+}
+
 func (p *StructPattern) ListTypes() []string {
 	lst := []string{}
 

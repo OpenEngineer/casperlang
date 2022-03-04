@@ -11,9 +11,10 @@ import (
 // possible targets:
 //  * default
 //  * repl
-var TARGET = "default"
-
-var PANIC = ""
+var (
+	TARGET = "default"
+	PANIC  = ""
+)
 
 // basic builtin manipulation functions, should be avaiable on all target platforms
 var builtinCoreFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{

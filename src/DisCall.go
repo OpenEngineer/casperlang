@@ -45,7 +45,10 @@ func badDispatchMessage(name string, args []Value, msg string, fns []Func) strin
 	var b strings.Builder
 
 	b.WriteString(msg)
-	b.WriteString(" (")
+	b.WriteString(" \"")
+	b.WriteString(name)
+	b.WriteString("\"\n  Want:\n    ")
+
 	b.WriteString(name)
 	for _, arg := range args {
 		b.WriteString(" ")
@@ -56,14 +59,13 @@ func badDispatchMessage(name string, args []Value, msg string, fns []Func) strin
 			b.WriteString(tn)
 		}
 	}
-	b.WriteString(")")
 
 	if fns != nil && len(fns) > 0 {
 		b.WriteString("\n  Have:\n")
 
 		for _, fn := range fns {
 			b.WriteString("    ")
-			b.WriteString(fn.DumpHead())
+			b.WriteString(fn.DumpPrettyHead())
 			b.WriteString("\n")
 		}
 	}

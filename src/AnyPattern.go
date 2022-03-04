@@ -16,6 +16,10 @@ func (p *AnyPattern) Dump() string {
 	return "Any"
 }
 
+func (p *AnyPattern) DumpPretty() string {
+	return p.Dump()
+}
+
 func (p *AnyPattern) Context() Context {
 	return p.ctx
 }

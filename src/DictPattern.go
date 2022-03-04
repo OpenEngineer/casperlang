@@ -16,6 +16,10 @@ func (p *DictPattern) Dump() string {
 	return "({} " + p.inner.Dump() + ")"
 }
 
+func (p *DictPattern) DumpPretty() string {
+	return "({} " + p.inner.DumpPretty() + ")"
+}
+
 func (p *DictPattern) ListTypes() []string {
 	return p.inner.ListTypes()
 }

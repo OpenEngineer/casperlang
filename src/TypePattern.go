@@ -19,6 +19,10 @@ func (p *TypePattern) Dump() string {
 	return p.tName.Dump()
 }
 
+func (p *TypePattern) DumpPretty() string {
+	return p.Dump()
+}
+
 func (p *TypePattern) Context() Context {
 	return p.tName.Context()
 }

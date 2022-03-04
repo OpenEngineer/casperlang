@@ -15,7 +15,7 @@ func NewConstructorPattern(name *Word, args []Pattern, ctx Context) *Constructor
 	return &ConstructorPattern{newTokenData(ctx), name, args, nil}
 }
 
-func writeConstructorPattern(name *Word, args []Pattern) string {
+func writeConstructorPattern(name *Word, args []Pattern, pretty bool) string {
 	var b strings.Builder
 
 	b.WriteString("(")
@@ -23,7 +23,11 @@ func writeConstructorPattern(name *Word, args []Pattern) string {
 
 	for _, arg := range args {
 		b.WriteString(" ")
-		b.WriteString(arg.Dump())
+		if pretty {
+			b.WriteString(arg.DumpPretty())
+		} else {
+			b.WriteString(arg.Dump())
+		}
 	}
 
 	b.WriteString(")")
@@ -40,7 +44,11 @@ func (t *ConstructorPattern) NumArgs() int {
 }
 
 func (t *ConstructorPattern) Dump() string {
-	return writeConstructorPattern(t.name, t.args)
+	return writeConstructorPattern(t.name, t.args, false)
+}
+
+func (t *ConstructorPattern) DumpPretty() string {
+	return writeConstructorPattern(t.name, t.args, true)
 }
 
 func (p *ConstructorPattern) ListTypes() []string {
