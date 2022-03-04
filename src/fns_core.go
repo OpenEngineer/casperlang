@@ -90,27 +90,6 @@ var builtinCoreFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 		},
 	},
 	BuiltinFuncConfig{
-		Name: "if",
-		Args: []string{"Bool", "Any", "Any"},
-		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
-			b := self.args[0]
-
-			if bv, ok := GetBoolValue(b, ew); ok {
-				if bv {
-					return self.args[1]
-				} else {
-					return self.args[2]
-				}
-			} else {
-				if !ew.Empty() {
-					return nil
-				} else {
-					panic("bool not available?")
-				}
-			}
-		},
-	},
-	BuiltinFuncConfig{
 		Name: "show",
 		Args: []string{"Int"},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
