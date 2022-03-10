@@ -1,3 +1,4 @@
+#!/usr/bin/env casper
 import "std" # can also be imported automatically via prelude
 import "./my_module"
 

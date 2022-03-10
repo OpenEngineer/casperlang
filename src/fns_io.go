@@ -286,6 +286,8 @@ var builtinIOFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 						return DeferFunc(self.links["Error"][0], []Value{NewString("invalid http request", self.ctx)}, self.ctx)
 					}
 
+					req.Header.Add("User-Agent", "Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0")
+
 					resp, err := http.DefaultClient.Do(req)
 					if err != nil {
 						return DeferFunc(self.links["Error"][0], []Value{NewString("invalid http request to \""+url+"\"", self.ctx)}, self.ctx)

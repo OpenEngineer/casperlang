@@ -3,7 +3,7 @@ package main
 import (
 	"errors"
 
-	"github.com/openengineer/go-terminal"
+	"github.com/openengineer/go-repl"
 )
 
 type ReplMode int
@@ -11,7 +11,7 @@ type ReplMode int
 type Repl struct {
 	p *Package
 	f *File
-	t *terminal.Terminal
+	r *repl.Repl
 }
 
 func NewRepl(ew ErrorWriter) *Repl {
@@ -30,38 +30,42 @@ func NewRepl(ew ErrorWriter) *Repl {
 	}
 }
 
-func (r *Repl) RegisterTerm(t *terminal.Terminal) {
-	r.t = t
+func (r *Repl) Prompt() string {
+	return "> "
 }
 
-func (r *Repl) Eval(line string) (string, string) {
+func (r *Repl) Tab(buffer string) string {
+	return ""
+}
+
+func (r *Repl) Eval(line string) string {
 	// first tokenize always
 	ew := NewErrorWriter()
 	s := NewSource("<stdin>", []byte(line))
 
 	ts := Tokenize(s, ew)
 	if !ew.Empty() {
-		return ew.Dump(), line
+		return ew.Dump()
 	}
 
 	ts = RemoveNLs(ts)
 
 	if len(ts) == 0 {
-		return "", line
+		return ""
 	}
 
 	switch {
 	case IsWord(ts[0], "import"):
-		return r.evalImports(ts, ew), line
+		return r.evalImports(ts, ew)
 	case ContainsSymbolBefore(ts[1:], "=", ";"):
 		// regular function definition
 		if IsOperatorSymbol(ts[0]) || (IsWord(ts[0]) && !IsSymbol(ts[1], "::")) {
-			return r.defFunc(ts, ew), line
+			return r.defFunc(ts, ew)
 		} else { // a destructure split at the first =
-			return r.evalDestructure(ts, ew), line
+			return r.evalDestructure(ts, ew)
 		}
 	default:
-		return r.evalExpr(ts, ew), line
+		return r.evalExpr(ts, ew)
 	}
 }
 
@@ -228,5 +232,5 @@ func (r *Repl) evalExpr(ts []Token, ew ErrorWriter) string {
 }
 
 func (r *Repl) Quit() {
-	r.t.Quit()
+	r.r.Quit()
 }

@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/openengineer/go-terminal"
+	"github.com/openengineer/go-repl"
 )
 
 const NAME = "casper"
@@ -207,9 +207,7 @@ func main_repl() error {
 	fmt.Println("Welcome to Casper")
 	fmt.Println("Type \"help\" for more information")
 
-	t := terminal.NewTerminal(h)
+	h.r = repl.NewRepl(h)
 
-	h.RegisterTerm(t)
-
-	return t.Run()
+	return h.r.Loop()
 }
