@@ -1,6 +1,7 @@
 package main
 
 import (
+	"path/filepath"
 	"strings"
 )
 
@@ -28,6 +29,10 @@ func NewSpecialContext(name string) Context {
 
 func (ctx Context) Path() string {
 	return ctx.src.Path()
+}
+
+func (ctx Context) Dir() string {
+	return filepath.Dir(ctx.Path())
 }
 
 func (ctx Context) Error(msg string) error {

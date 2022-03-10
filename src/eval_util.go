@@ -1,5 +1,7 @@
 package main
 
+import "reflect"
+
 func EvalUntil(arg Value, cond func(string) bool, ew ErrorWriter) (Value, Value) {
 	if arg == nil {
 		return nil, nil
@@ -102,5 +104,45 @@ func EvalPretty(v Value) Value {
 		return NewDict(v_.Keys(), vals, v_.Context())
 	default:
 		return v
+	}
+}
+
+func ConvertUntyped(x_ interface{}, ctx Context) Value {
+
+	switch x := x_.(type) {
+	case map[string]interface{}:
+		keys := make([]*String, 0)
+		vals := make([]Value, 0)
+
+		for k, v := range x {
+			keys = append(keys, NewString(k, ctx))
+			vals = append(vals, ConvertUntyped(v, ctx))
+		}
+
+		return NewDict(keys, vals, ctx)
+	case []interface{}:
+		items := make([]Value, 0)
+
+		for _, v := range x {
+			items = append(items, ConvertUntyped(v, ctx))
+		}
+
+		return NewList(items, ctx)
+	case string:
+		return NewString(x, ctx)
+	case float64:
+		return NewFloat(x, ctx)
+	case int:
+		return NewInt(int64(x), ctx)
+	case int64:
+		return NewInt(x, ctx)
+	case bool:
+		if x {
+			return NewInt(1, ctx)
+		} else {
+			return NewInt(0, ctx)
+		}
+	default:
+		panic("unhandled type " + reflect.TypeOf(x_).String())
 	}
 }

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"math"
 	"os"
@@ -636,6 +637,21 @@ var builtinCoreFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 				return nil
 			} else {
 				return NewList(s.items, self.ctx)
+			}
+		},
+	},
+	BuiltinFuncConfig{
+		Name:     "parseJson",
+		Args:     []string{"String"},
+		LinkReqs: []string{"Error"},
+		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
+			raw := AssertString(self.args[0]).Value()
+
+			var res interface{} = nil
+			if err := json.Unmarshal([]byte(raw), &res); err != nil {
+				return DeferFunc(self.links["Error"][0], []Value{NewString(err.Error(), self.ctx)}, self.ctx)
+			} else {
+				return ConvertUntyped(res, self.ctx)
 			}
 		},
 	},

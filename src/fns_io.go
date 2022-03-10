@@ -13,7 +13,16 @@ import (
 	"strings"
 )
 
-// XXX: are the evals here redundant, because they are already done in Call?
+func getPath(arg Value) string {
+	a := arg.(Call)
+	p := AssertString(a.Args()[0])
+	path := p.Value()
+	if !filepath.IsAbs(path) {
+		path = filepath.Join(p.Context().Dir(), path)
+	}
+
+	return path
+}
 
 var builtinIOFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 	BuiltinFuncConfig{
@@ -22,22 +31,6 @@ var builtinIOFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 		LinkReqs: []string{"Any"},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
 			return DeferFunc(self.links["Any"][0], []Value{}, self.ctx)
-		},
-	},
-	BuiltinFuncConfig{
-		Name:     "File",
-		Args:     []string{"String"},
-		LinkReqs: []string{"Path"},
-		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
-			return DeferFunc(self.links["Path"][0], []Value{self.args[0]}, self.ctx)
-		},
-	},
-	BuiltinFuncConfig{
-		Name:     "Dir",
-		Args:     []string{"String"},
-		LinkReqs: []string{"Path"},
-		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
-			return DeferFunc(self.links["Path"][0], []Value{self.args[0]}, self.ctx)
 		},
 	},
 	BuiltinFuncConfig{
@@ -162,15 +155,33 @@ var builtinIOFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 		},
 	},
 	BuiltinFuncConfig{
-		Name:     "read",
-		Args:     []string{"File"},
+		Name:     "ls",
+		Args:     []string{"Path"},
 		LinkReqs: []string{"Error"},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
-			a := self.args[0].(Call)
-			p := AssertString(a.Args()[0])
+			path := getPath(self.args[0])
 
-			// TODO: should be relative to current path?
-			fname := p.Value()
+			infos, err := ioutil.ReadDir(path)
+			if err == nil {
+				items := make([]Value, 0)
+				for _, info := range infos {
+					str := filepath.Join(path, info.Name())
+
+					items = append(items, NewString(str, self.ctx))
+				}
+
+				return NewList(items, self.ctx)
+			} else {
+				return DeferFunc(self.links["Error"][0], []Value{NewString("unable to read dir \""+path+"\"", self.ctx)}, self.ctx)
+			}
+		},
+	},
+	BuiltinFuncConfig{
+		Name:     "read",
+		Args:     []string{"Path"},
+		LinkReqs: []string{"Error"},
+		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
+			fname := getPath(self.args[0])
 
 			return NewIO(
 				func(ioc IOContext) Value {
@@ -197,13 +208,12 @@ var builtinIOFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 	// TODO: custom permissions
 	BuiltinFuncConfig{
 		Name:     "write",
-		Args:     []string{"File", "String"},
+		Args:     []string{"Path", "String"},
 		LinkReqs: []string{"Error", "Ok"},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
-			a := self.args[0].(Call)
+			fname := getPath(self.args[0])
 			b := self.args[1]
 			data := AssertString(b)
-			fname := AssertString(a.Args()[0]).Value()
 
 			return NewIO(
 				func(ioc IOContext) Value {
@@ -229,13 +239,12 @@ var builtinIOFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 	// TODO: custom permissions
 	BuiltinFuncConfig{
 		Name:     "overwrite",
-		Args:     []string{"File", "String"},
+		Args:     []string{"Path", "String"},
 		LinkReqs: []string{"Error", "Ok"},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
-			a := self.args[0].(Call)
+			fname := getPath(self.args[0])
 			b := self.args[1]
 			data := AssertString(b)
-			fname := AssertString(a.Args()[0]).Value()
 
 			return NewIO(
 				func(ioc IOContext) Value {

@@ -227,7 +227,12 @@ func (p *Package) RegisterFuncs(ew ErrorWriter) {
 
 // contains exactly one module and exactly one file
 func LoadReplPackage(ew ErrorWriter) *Package {
-	cfg := LoadConfig(nil, ew)
+	var dir *String = nil
+	pwd, err := os.Getwd()
+	if err == nil {
+		dir = NewString(pwd, NewBuiltinContext())
+	}
+	cfg := LoadConfig(dir, ew)
 	if cfg == nil {
 		return nil
 	}

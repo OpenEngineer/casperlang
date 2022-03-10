@@ -1,7 +1,7 @@
 #!/usr/bin/env casper
 
 greeting = "hello world"
-file     = File "example_data.txt"
+file     = Path "example_data.txt"
 
 # write greeting to file (specify more than 0 args to overwrite file)
 main = 

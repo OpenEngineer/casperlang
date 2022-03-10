@@ -25,7 +25,7 @@ main =
   test "./05_bool" "false\ntrue\n";
   test "./06_branching" "10\n";
   test "./07_enum" "2 of clubs\n";
-  test "./08_cat" ["./08_cat/example_data.txt"] "hello world\n";
+  test "./08_cat" ["example_data.txt"] "hello world\n";
   test "./09_dict" "100\nError: key rice not found\n";
   test "./10_dot" "11\n";
   test "./11_echo_many" "1\n2\n3\n4\nasd\nfalse\n";

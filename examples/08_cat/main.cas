@@ -2,7 +2,7 @@
 
 # print contents of a file
 
-cat (Just p::String) = read (File p)
+cat (Just p::String) = read (Path p)
 cat Nothing = Error "expected 1 arg"
 
 main =

@@ -13,7 +13,7 @@ syn region String start=+"+  skip=+\\\\\|\\"+  end=+"\|$+	contains=Special
 syn match Special "'\\.'" contained
 syn match Macro "$\(\d\+\)\?"
 
-syn keyword Type String Int Any IO Float Bool File Dir Path
+syn keyword Type String Int Any IO Float Bool Path
 
 syn match Constant "-\=\<\d\+L\=\>\|0[b][0-1]\+\>"
 syn match Constant "-\=\<\d\+L\=\>\|0[o][0-7]\+\>"
