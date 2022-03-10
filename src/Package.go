@@ -400,7 +400,7 @@ func (p *Package) GetPackage(name *Word, ew ErrorWriter) *Package {
 }
 
 func (p *Package) GetExternalModule(path *String, consumers []*Module, ew ErrorWriter) *Module {
-	parts := filepath.SplitList(path.Value())
+	parts := strings.Split(path.Value(), string([]byte{filepath.Separator}))
 
 	if len(parts) == 0 {
 		ew.Add(errors.New("invalid empty import"))
@@ -408,6 +408,10 @@ func (p *Package) GetExternalModule(path *String, consumers []*Module, ew ErrorW
 	}
 
 	pName := parts[0]
+
+	if strings.Contains(pName, "/") {
+		panic("should've been split")
+	}
 
 	dep := p.GetPackage(NewWord(pName, path.Context()), ew)
 	if !ew.Empty() {

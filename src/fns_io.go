@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"bytes"
 	"fmt"
 	"io"
@@ -138,10 +137,8 @@ var builtinIOFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
 			return NewIO(
 				func(ioc IOContext) Value {
-					scanner := bufio.NewScanner(os.Stdin)
-					scanner.Scan()
-
-					return NewString(scanner.Text(), self.ctx)
+					txt := ioc.ReadLine(true)
+					return NewString(txt, self.ctx)
 				},
 				self.ctx,
 			)
@@ -245,7 +242,7 @@ var builtinIOFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 					info, err := os.Stat(fname)
 					if err != nil && !os.IsNotExist(err) {
 						return DeferFunc(self.links["Error"][0], []Value{NewString("can't write \""+fname+"\", access error", self.ctx)}, self.ctx)
-					} else if info.IsDir() {
+					} else if info != nil && info.IsDir() {
 						return DeferFunc(self.links["Error"][0], []Value{NewString("can't write \""+fname+"\", already exists as directory", self.ctx)}, self.ctx)
 					} else {
 						err := ioutil.WriteFile(fname, []byte(data.Value()), 0644)

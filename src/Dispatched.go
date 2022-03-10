@@ -49,6 +49,8 @@ func (d *Dispatched) Failed() bool {
 func (d *Dispatched) BetterThan(other *Dispatched) (bool, bool) {
 	if other == nil {
 		return true, false
+	} else if d.distance[0] != other.distance[0] {
+		return d.distance[0] < other.distance[0], false
 	} else if len(d.distance) > len(other.distance) {
 		return true, false
 	} else if len(d.distance) == len(other.distance) {

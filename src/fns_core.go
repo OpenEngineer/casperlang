@@ -316,6 +316,30 @@ var builtinCoreFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 			return NewList(newItems, self.ctx)
 		},
 	},
+	BuiltinFuncConfig{
+		Name: "map",
+		Args: []string{"\\2", "{}"},
+		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
+			fn := AssertAnonFunc(self.args[0])
+			dct := AssertDict(self.args[1])
+
+			keys := dct.Keys()
+			vals := dct.Values()
+
+			newItems := []Value{}
+
+			for i, val := range vals {
+				newItem := fn.EvalRhs([]Value{keys[i], val}, ew)
+				if newItem == nil {
+					return nil
+				}
+
+				newItems = append(newItems, newItem)
+			}
+
+			return NewList(newItems, self.ctx)
+		},
+	},
 	// returns Just or Nothing
 	BuiltinFuncConfig{
 		Name:     "fold",
