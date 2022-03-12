@@ -133,14 +133,14 @@ var builtinIOFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 						return nil
 					}
 
-					res_, _ := EvalUntil(res, func(tn string) bool {
+					concrete, virt := EvalUntil(res, func(tn string) bool {
 						return tn == "IO"
 					}, ew)
 
-					if res_ == nil { // not IO
+					if virt == nil { // not IO
 						return res
 					} else {
-						return AssertIO(res_).Run(ioc)
+						return AssertIO(concrete).Run(ioc)
 					}
 				},
 				self.ctx,

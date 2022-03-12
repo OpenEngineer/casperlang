@@ -54,8 +54,8 @@ func (p *TypePattern) Destructure(arg Value, ew ErrorWriter) *Destructured {
 		return tn == p.TypeName()
 	}, ew)
 
-	if concrete == nil {
-		return NewDestructured(arg, nil)
+	if virt == nil {
+		return NewDestructured(concrete, nil)
 	}
 
 	distance := []int{len(virt.Constructors())}

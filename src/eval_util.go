@@ -26,7 +26,7 @@ func EvalUntil(arg Value, cond func(string) bool, ew ErrorWriter) (Value, Value)
 		} else {
 			call, ok := arg.(Call)
 			if !ok {
-				return nil, nil
+				return arg, nil
 			}
 
 			arg = call.Eval(ew)

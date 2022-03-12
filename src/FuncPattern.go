@@ -46,8 +46,8 @@ func (p *FuncPattern) Destructure(arg Value, ew ErrorWriter) *Destructured {
 		return tn == p.Dump()
 	}, ew)
 
-	if concrete == nil {
-		return NewDestructured(arg, nil)
+	if virt == nil {
+		return NewDestructured(concrete, nil)
 	}
 
 	distance := []int{len(virt.Constructors())}

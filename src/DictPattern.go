@@ -47,8 +47,8 @@ func (p *DictPattern) Destructure(arg Value, ew ErrorWriter) *Destructured {
 		return tn == "{}"
 	}, ew)
 
-	if concrete == nil {
-		return NewDestructured(arg, nil)
+	if virt == nil {
+		return NewDestructured(concrete, nil)
 	}
 
 	distance := []int{len(virt.Constructors())}

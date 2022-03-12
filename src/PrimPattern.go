@@ -42,8 +42,8 @@ func (p *PrimPattern) Destructure(arg Value, ew ErrorWriter) *Destructured {
 		return tn == p.name
 	}, ew)
 
-	if concrete == nil {
-		return NewDestructured(arg, nil)
+	if virt == nil {
+		return NewDestructured(concrete, nil)
 	}
 
 	distance := []int{len(virt.Constructors())}
