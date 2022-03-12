@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"reflect"
 	"strings"
 )
@@ -65,8 +66,20 @@ func (f *AnonFunc) EvalRhs(args []Value, ew ErrorWriter) Value {
 
 	d := f.FuncData.dispatch(args, ew)
 
-	if d == nil {
-		ew.Add(f.Context().Error("unable to destructure"))
+	if d == nil || d.Failed() {
+		// find out exactly which argument failes
+		if len(args) != f.NumArgs() {
+			ew.Add(f.Context().Error("unable to destructure, number of args differ"))
+		} else {
+			for i, arg := range args {
+				des := f.head.args[i].Destructure(arg, ew)
+				if des == nil || des.Failed() {
+					ew.Add(f.Context().Error(fmt.Sprintf("unable to destructure arg %d\n  Have:\n    %s\n  Expect:\n    %s", i+1, arg.Dump(), f.head.args[i].DumpPretty())))
+					break
+				}
+			}
+		}
+
 		return nil
 	}
 

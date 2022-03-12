@@ -32,7 +32,8 @@ Outer:
 		case IsSymbol(t, "="):
 			nextSemicolon := FindNextSymbol(ts, i+1, ";")
 			if nextSemicolon == -1 {
-				panic("unexpected")
+				ew.Add(ts[len(ts)-1].Context().Error("expected a semicolon"))
+				return nil
 			}
 
 			fnBodyExpr := ParseExpr(ts[nextSemicolon+1:], ew)

@@ -2,6 +2,9 @@ package main
 
 import "reflect"
 
+// first returned value is concrete value, second is virtual value
+// if there was an error then both are nil
+// if the condition failed, then virt will be nil, and concrete will the most recent eval
 func EvalUntil(arg Value, cond func(string) bool, ew ErrorWriter) (Value, Value) {
 	if arg == nil {
 		return nil, nil

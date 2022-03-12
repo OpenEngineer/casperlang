@@ -28,10 +28,12 @@ func AssertError(e_ error) *Error {
 }
 
 func (e *Error) Error() string {
-	if TARGET == "repl" {
-		return "Error: " + e.msg
-	} else if strings.HasPrefix(e.ctx.src.Path(), "<") {
-		return writeError(e.ctx.src, e.ctx.end, e.msg, false)
+	if strings.HasPrefix(e.ctx.src.Path(), "<") {
+		if TARGET == "repl" {
+			return "Error: " + e.msg
+		} else {
+			return writeError(e.ctx.src, e.ctx.end, e.msg, false)
+		}
 	} else if e.end {
 		return writeError(e.ctx.src, e.ctx.end, e.msg, true)
 	} else {

@@ -26,7 +26,7 @@ func (v *BlindCall) Name() string {
 }
 
 func (t *BlindCall) Dump() string {
-	return t.CallData.dump(t.fn.Dump())
+	return "BC" + t.CallData.dump(t.fn.Dump())
 }
 
 func (v *BlindCall) Link(scope Scope, ew ErrorWriter) Value {

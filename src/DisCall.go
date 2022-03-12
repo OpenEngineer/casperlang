@@ -127,9 +127,10 @@ func (t *DisCall) dispatch(ew ErrorWriter) *Dispatched {
 
 func (t *DisCall) Eval(ew ErrorWriter) Value {
 	d := t.dispatch(ew)
-	if d == nil {
+	if d == nil || d.Failed() {
 		return nil
 	} else {
+		//fmt.Println(t.Name())
 		d.ctx = t.Context()
 		v := d.Eval()
 

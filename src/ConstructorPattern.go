@@ -88,6 +88,7 @@ func (p *ConstructorPattern) Link(scope *FuncScope, ew ErrorWriter) Pattern {
 	fns := scope.ListDispatchable(name, p.NumArgs(), ew)
 	if len(fns) == 0 {
 		ew.Add(p.name.Context().Error("\"" + name + "\" undefined"))
+		return nil
 	} else if len(fns) > 1 {
 		ew.Add(errors.New(multipleConstructorsError(name, fns)))
 	}

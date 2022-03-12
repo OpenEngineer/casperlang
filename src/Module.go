@@ -323,7 +323,7 @@ func (m *Module) RunEntryPoint(path string, ew ErrorWriter) {
 
 				v = io.Run(NewDefaultIOContext())
 
-				if v != nil {
+				if v != nil && ew.Empty() {
 					ew.Add(v.Context().Error("unused IO result"))
 				}
 			}

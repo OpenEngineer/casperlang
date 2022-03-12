@@ -59,6 +59,10 @@ func userPackageConfig() (string, bool) {
 }
 
 func searchPackageConfig(dir string) (string, bool) {
+	if !filepath.IsAbs(dir) {
+		panic("dir must be abs at this point")
+	}
+
 	path := filepath.Join(dir, "package.json")
 
 	if DEBUG_PKG_LOADING {
@@ -335,6 +339,11 @@ func (p *Package) depNameToPath(name *Word, ew ErrorWriter) *String {
 		depPathStr = filepath.Clean(filepath.Join(p.raw.Context().Path(), depPathStr))
 	}
 
+	if !filepath.IsAbs(depPathStr) {
+		ew.Add(depPath_.Context().Error("bad path \"" + depPath.Value() + "\""))
+		return nil
+	}
+
 	return NewString(depPathStr, name.Context())
 }
 
@@ -378,6 +387,10 @@ func checkGitPackage(name *Word, raw *Dict, ew ErrorWriter) *String {
 		}
 	}
 
+	if !filepath.IsAbs(localPath) {
+		panic("must be abspath")
+	}
+
 	return NewString(localPath, raw.Context())
 }
 
@@ -385,6 +398,10 @@ func (p *Package) GetPackage(name *Word, ew ErrorWriter) *Package {
 	path := p.depNameToPath(name, ew)
 	if path == nil || !ew.Empty() {
 		return nil
+	}
+
+	if !filepath.IsAbs(path.Value()) {
+		panic("must be abspath")
 	}
 
 	if dep, ok := p.deps[path.Value()]; ok {

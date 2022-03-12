@@ -15,8 +15,17 @@ import (
 
 func getPath(arg Value) string {
 	a := arg.(Call)
-	p := AssertString(a.Args()[0])
-	path := p.Value()
+
+	ew := NewErrorWriter()
+	p, _ := EvalUntil(a.Args()[0], func(tn string) bool {
+		return tn == "String"
+	}, ew)
+
+	if p == nil || !ew.Empty() {
+		panic("content not string")
+	}
+
+	path := AssertString(p).Value()
 	if !filepath.IsAbs(path) {
 		path = filepath.Join(p.Context().Dir(), path)
 	}
@@ -28,9 +37,16 @@ var builtinIOFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 	BuiltinFuncConfig{
 		Name:     "Path",
 		Args:     []string{"String"},
-		LinkReqs: []string{"Any"},
+		LinkReqs: []string{"Any", "Path"},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
-			return DeferFunc(self.links["Any"][0], []Value{}, self.ctx)
+			res := DeferFunc(self.links["Any"][0], []Value{}, self.ctx)
+
+			path := getPath(res)
+			if path == AssertString(self.args[0]).Value() {
+				return res
+			} else {
+				return DeferFunc(self.links["Path"][0], []Value{NewString(path, self.ctx)}, self.ctx)
+			}
 		},
 	},
 	BuiltinFuncConfig{
@@ -82,6 +98,11 @@ var builtinIOFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 
 					aIO := a.Run(ioc)
 
+					// the same ew will have been captured by Run anonymous functions
+					if !ew.Empty() {
+						return nil
+					}
+
 					if aIO != nil {
 						ew.Add(self.ctx.Error("unused return value of lhs"))
 						return nil
@@ -112,12 +133,14 @@ var builtinIOFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 						return nil
 					}
 
-					res = ResolveIO(res, fn.Context(), ew)
+					res_, _ := EvalUntil(res, func(tn string) bool {
+						return tn == "IO"
+					}, ew)
 
-					if res != nil {
-						return AssertIO(res).Run(ioc)
-					} else {
+					if res_ == nil { // not IO
 						return res
+					} else {
+						return AssertIO(res_).Run(ioc)
 					}
 				},
 				self.ctx,
@@ -157,23 +180,28 @@ var builtinIOFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 	BuiltinFuncConfig{
 		Name:     "ls",
 		Args:     []string{"Path"},
-		LinkReqs: []string{"Error"},
+		LinkReqs: []string{"Error", "Path"},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
 			path := getPath(self.args[0])
 
-			infos, err := ioutil.ReadDir(path)
-			if err == nil {
-				items := make([]Value, 0)
-				for _, info := range infos {
-					str := filepath.Join(path, info.Name())
+			return NewIO(
+				func(ioc IOContext) Value {
+					infos, err := ioutil.ReadDir(path)
+					if err == nil {
+						items := make([]Value, 0)
+						for _, info := range infos {
+							str := filepath.Join(path, info.Name())
 
-					items = append(items, NewString(str, self.ctx))
-				}
+							items = append(items, DeferFunc(self.links["Path"][0], []Value{NewString(str, self.ctx)}, self.ctx))
+						}
 
-				return NewList(items, self.ctx)
-			} else {
-				return DeferFunc(self.links["Error"][0], []Value{NewString("unable to read dir \""+path+"\"", self.ctx)}, self.ctx)
-			}
+						return NewList(items, self.ctx)
+					} else {
+						return DeferFunc(self.links["Error"][0], []Value{NewString("unable to read dir \""+path+"\"", self.ctx)}, self.ctx)
+					}
+				},
+				self.ctx,
+			)
 		},
 	},
 	BuiltinFuncConfig{

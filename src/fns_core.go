@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"path/filepath"
 	"sort"
 	"strconv"
+	"strings"
 )
 
 // possible targets:
@@ -142,7 +144,7 @@ var builtinCoreFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 		Name: "toInt",
 		Args: []string{"Float"},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
-			i := int64(math.Round(AssertFloat(self.args[0]).Value()))
+			i := int64(math.Floor(AssertFloat(self.args[0]).Value()))
 			return NewInt(i, self.ctx)
 		},
 	},
@@ -653,6 +655,43 @@ var builtinCoreFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 			} else {
 				return ConvertUntyped(res, self.ctx)
 			}
+		},
+	},
+	BuiltinFuncConfig{
+		Name: "pathSeparator",
+		Args: []string{},
+		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
+			return NewString(string([]rune{filepath.Separator}), self.ctx)
+		},
+	},
+	BuiltinFuncConfig{
+		Name: "split",
+		Args: []string{"String", "String"},
+		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
+			items := make([]Value, 0)
+
+			parts := strings.Split(AssertString(self.args[1]).Value(), AssertString(self.args[0]).Value())
+
+			for _, part := range parts {
+				items = append(items, NewString(part, self.ctx))
+			}
+
+			return NewList(items, self.ctx)
+		},
+	},
+	BuiltinFuncConfig{
+		Name: "dump",
+		Args: []string{"Any"},
+		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
+			ewInner := NewErrorWriter()
+
+			v := EvalEager(self.args[0], ewInner)
+			if ewInner.Empty() {
+				fmt.Println(EvalPretty(v).Dump())
+			} else {
+				fmt.Println(self.args[0].Dump())
+			}
+			return self.args[0]
 		},
 	},
 }

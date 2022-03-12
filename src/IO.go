@@ -56,7 +56,9 @@ func ResolveIO(res Value, ctx Context, ew ErrorWriter) Value {
 
 	if concrete == nil || !ew.Empty() {
 		if ew.Empty() {
-			ew.Add(ctx.Error("expected IO return value"))
+			res = EvalPretty(res)
+
+			ew.Add(ctx.Error("expected IO return value, got " + res.Dump()))
 		}
 		return nil
 	} else {
