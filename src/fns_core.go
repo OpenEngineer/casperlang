@@ -52,6 +52,7 @@ var builtinCoreFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 			return DeferFunc(self.links["Bool"][0], []Value{}, self.ctx)
 		},
 	},
+	// TODO: do we really need Maybe? can't it just be the thing or Nothing? then also Nothing should be renamed to Void?
 	BuiltinFuncConfig{
 		Name:     "Maybe",
 		Args:     []string{},
@@ -87,6 +88,15 @@ var builtinCoreFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 	BuiltinFuncConfig{
 		Name:     "Ok",
 		Args:     []string{},
+		LinkReqs: []string{"Any"},
+		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
+			return DeferFunc(self.links["Any"][0], []Value{}, self.ctx)
+		},
+	},
+	// number of microseconds since epoch!
+	BuiltinFuncConfig{
+		Name:     "Date",
+		Args:     []string{"Int"},
 		LinkReqs: []string{"Any"},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
 			return DeferFunc(self.links["Any"][0], []Value{}, self.ctx)

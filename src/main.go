@@ -4,7 +4,9 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/signal"
 	"path/filepath"
+	"runtime/pprof"
 	"strings"
 
 	"github.com/openengineer/go-repl"
@@ -17,6 +19,7 @@ var ARGS []string = nil
 var SUBCMD_USAGE = map[string]string{
 	"tokenize": "tokenize <file>",
 	"parse":    "parse <file>",
+	"profile":  "profile <file> <args>",
 	"":         "<file> <args>",
 }
 
@@ -101,6 +104,8 @@ func main_() error {
 		return main_tokenizeFile(subArgs)
 	case "parse":
 		return main_parseFile(subArgs)
+	case "profile":
+		return main_profiledRun(subArgs)
 	default:
 		return genUsageError("Unrecognized command " + cmd)
 	}
@@ -182,6 +187,56 @@ func main_evalJSON(args []string) error {
 	} else {
 		printMessage(v.Dump())
 	}
+
+	return nil
+}
+
+var PROF_FILE *os.File = nil
+
+func startProfiling(profFile string) {
+	var err error
+	PROF_FILE, err = os.Create(profFile)
+	if err != nil {
+		printErrorAndQuit(err.Error())
+	}
+
+	pprof.StartCPUProfile(PROF_FILE)
+
+	go func() {
+		sigchan := make(chan os.Signal)
+		signal.Notify(sigchan, os.Interrupt)
+		<-sigchan
+
+		stopProfiling(profFile)
+
+		os.Exit(1)
+	}()
+}
+
+func stopProfiling(profFile string) {
+	if PROF_FILE != nil {
+		pprof.StopCPUProfile()
+
+		// also write mem profile
+		fMem, err := os.Create(profFile + ".mprof")
+		if err != nil {
+			printErrorAndQuit(err.Error())
+		}
+
+		pprof.WriteHeapProfile(fMem)
+		fMem.Close()
+
+		PROF_FILE = nil
+	}
+}
+
+func main_profiledRun(args []string) error {
+	startProfiling("profile.dat")
+
+	ARGS = args[1:]
+	main_runFile(args[0])
+
+	stopProfiling("profile.dat")
 
 	return nil
 }

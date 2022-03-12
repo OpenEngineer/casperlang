@@ -72,3 +72,17 @@ In case the program should be run in another environment (eg. javascript in the 
 Optionally the expressions can be simplified as much as possible before serializing.
 
 Separate VM's that run these binary versions of *casper* programs would need to be implemented independently from the compiler.
+
+## Profiling
+
+Start the profiling tool:
+```
+go tool pprof "profile.dat"
+```
+
+Inside the profiling REPL:
+```
+top 100
+```
+
+See top 100 most used functions.

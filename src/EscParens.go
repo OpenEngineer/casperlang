@@ -61,8 +61,12 @@ func GroupEscParens(ts []Token, ew ErrorWriter) Token {
 	ids := []int{}
 
 	//
-	for i, t := range inner {
-		if IsDollar(t) {
+	for i := 0; i < len(inner); i++ {
+		t := inner[i]
+		if IsSymbol(t, "\\(") {
+			// skip until the next group match
+			i = FindGroupMatch(inner, i, AssertSymbol(t), ew)
+		} else if IsDollar(t) {
 			d := AssertDollar(t)
 
 			if !impl && !expl {

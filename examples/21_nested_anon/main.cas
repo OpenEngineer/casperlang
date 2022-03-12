@@ -1,0 +1,4 @@
+main =
+  data = [[1,2,3],[4,5]];
+  res = map \(n = len $1; map \($*n) $1) data;
+  show res | println

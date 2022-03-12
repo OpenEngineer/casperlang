@@ -35,4 +35,5 @@ main =
   test "./15_read" [] (Just "Jojo") "what is your first name?\nwhat is your last name?\nhello Jojo \n";
   test "./16_sort" "1.000000 01230ualksjd a a b c n 1 2 4 6 102370 1092381 0-0 1-2\n";
   test "./17_vec2" "1.414214\n";
-  test "./20_zip" "1 2 3\na b c\na 1 b 2 c 3\n"
+  test "./20_zip" "1 2 3\na b c\na 1 b 2 c 3\n";
+  test "./21_nested_anon" "3 6 9 8 10\n"

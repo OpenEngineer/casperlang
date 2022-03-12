@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 )
 
 func getPath(arg Value) string {
@@ -413,6 +414,23 @@ var builtinIOFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 							return NewString(string(out), self.ctx)
 						}
 					}
+				},
+				self.ctx,
+			)
+		},
+	},
+	BuiltinFuncConfig{
+		Name:     "now",
+		Args:     []string{},
+		LinkReqs: []string{"Date"},
+		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
+			return NewIO(
+				func(ioc IOContext) Value {
+					now := time.Now()
+
+					var i64 int64 = (now.Unix() * 1000 * 1000) + int64(now.Nanosecond()/1000)
+
+					return DeferFunc(self.links["Date"][0], []Value{NewInt(i64, self.ctx)}, self.ctx)
 				},
 				self.ctx,
 			)
