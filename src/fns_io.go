@@ -40,13 +40,22 @@ var builtinIOFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 		Args:     []string{"String"},
 		LinkReqs: []string{"Any", "Path"},
 		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
-			res := DeferFunc(self.links["Any"][0], []Value{}, self.ctx)
 
-			path := getPath(res)
-			if path == AssertString(self.args[0]).Value() {
-				return res
+			if filepath.IsAbs(AssertString(self.args[0]).Value()) {
+				return DeferFunc(self.links["Any"][0], []Value{}, self.ctx)
 			} else {
-				return DeferFunc(self.links["Path"][0], []Value{NewString(path, self.ctx)}, self.ctx)
+				base := self.args[0].Context().Dir()
+				if !filepath.IsAbs(base) {
+					base, _ = os.Getwd()
+				}
+
+				absPath := filepath.Join(base, AssertString(self.args[0]).Value())
+
+				if !filepath.IsAbs(absPath) {
+					panic("expected abs")
+				}
+
+				return DeferFunc(self.links["Path"][0], []Value{NewString(absPath, self.ctx)}, self.ctx)
 			}
 		},
 	},
@@ -431,6 +440,113 @@ var builtinIOFuncs []BuiltinFuncConfig = []BuiltinFuncConfig{
 					var i64 int64 = (now.Unix() * 1000 * 1000) + int64(now.Nanosecond()/1000)
 
 					return DeferFunc(self.links["Date"][0], []Value{NewInt(i64, self.ctx)}, self.ctx)
+				},
+				self.ctx,
+			)
+		},
+	},
+	BuiltinFuncConfig{
+		Name:     "mkdir",
+		Args:     []string{"Path"},
+		LinkReqs: []string{"Error", "Ok"},
+		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
+			fname := getPath(self.args[0])
+
+			return NewIO(
+				func(ioc IOContext) Value {
+					err := os.MkdirAll(fname, 0755)
+
+					if err != nil {
+						return DeferFunc(self.links["Error"][0], []Value{NewString(err.Error(), self.ctx)}, self.ctx)
+					} else {
+						return DeferFunc(self.links["Ok"][0], []Value{}, self.ctx)
+					}
+				},
+				self.ctx,
+			)
+		},
+	},
+	BuiltinFuncConfig{
+		Name:     "ln",
+		Args:     []string{"Path", "Path"},
+		LinkReqs: []string{"Error", "Ok"},
+		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
+			srcName := getPath(self.args[0])
+			dstName := getPath(self.args[1])
+
+			return NewIO(
+				func(ioc IOContext) Value {
+					err := os.Symlink(srcName, dstName)
+
+					if err != nil {
+						return DeferFunc(self.links["Error"][0], []Value{NewString(err.Error(), self.ctx)}, self.ctx)
+					} else {
+						return DeferFunc(self.links["Ok"][0], []Value{}, self.ctx)
+					}
+				},
+				self.ctx,
+			)
+		},
+	},
+	BuiltinFuncConfig{
+		Name:     "mv",
+		Args:     []string{"Path", "Path"},
+		LinkReqs: []string{"Error", "Ok"},
+		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
+			oldName := getPath(self.args[0])
+			newName := getPath(self.args[1])
+
+			return NewIO(
+				func(ioc IOContext) Value {
+					err := os.Rename(oldName, newName)
+
+					if err != nil {
+						return DeferFunc(self.links["Error"][0], []Value{NewString(err.Error(), self.ctx)}, self.ctx)
+					} else {
+						return DeferFunc(self.links["Ok"][0], []Value{}, self.ctx)
+					}
+				},
+				self.ctx,
+			)
+		},
+	},
+	BuiltinFuncConfig{
+		Name:     "cd",
+		Args:     []string{"Path"},
+		LinkReqs: []string{"Error", "Ok"},
+		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
+			newDir := getPath(self.args[0])
+
+			return NewIO(
+				func(ioc IOContext) Value {
+					err := os.Chdir(newDir)
+
+					if err != nil {
+						return DeferFunc(self.links["Error"][0], []Value{NewString(err.Error(), self.ctx)}, self.ctx)
+					} else {
+						return DeferFunc(self.links["Ok"][0], []Value{}, self.ctx)
+					}
+				},
+				self.ctx,
+			)
+		},
+	},
+	BuiltinFuncConfig{
+		Name:     "rm",
+		Args:     []string{"Path"},
+		LinkReqs: []string{"Error", "Ok"},
+		Eval: func(self *BuiltinCall, ew ErrorWriter) Value {
+			fname := getPath(self.args[0])
+
+			return NewIO(
+				func(ioc IOContext) Value {
+					err := os.Remove(fname)
+
+					if err != nil {
+						return DeferFunc(self.links["Error"][0], []Value{NewString(err.Error(), self.ctx)}, self.ctx)
+					} else {
+						return DeferFunc(self.links["Ok"][0], []Value{}, self.ctx)
+					}
 				},
 				self.ctx,
 			)

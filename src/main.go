@@ -13,14 +13,16 @@ import (
 )
 
 const NAME = "casper"
+const VERSION = "0.1.0"
 
 var ARGS []string = nil
 
 var SUBCMD_USAGE = map[string]string{
-	"tokenize": "tokenize <file>",
-	"parse":    "parse <file>",
-	"profile":  "profile <file> <args>",
 	"":         "<file> <args>",
+	"tokenize": "tokenize <file>",
+	"parse":    "parse    <file>",
+	"profile":  "profile  <file> <args>",
+	"version":  "version",
 }
 
 func printErrorAndQuit(msg string) {
@@ -93,7 +95,7 @@ func main_() error {
 		return nil
 	} else if len(args) == 0 {
 		return main_repl()
-	} else if len(args) < 2 {
+	} else if len(args) < 2 && args[0] != "version" {
 		return genUsageError("")
 	}
 
@@ -106,6 +108,9 @@ func main_() error {
 		return main_parseFile(subArgs)
 	case "profile":
 		return main_profiledRun(subArgs)
+	case "version":
+		fmt.Println(VERSION)
+		return nil
 	default:
 		return genUsageError("Unrecognized command " + cmd)
 	}
@@ -259,7 +264,7 @@ func main_repl() error {
 		printErrorAndQuit(ew.Dump())
 	}
 
-	fmt.Println("Welcome to Casper")
+	fmt.Printf("Welcome to Casper %s\n", VERSION)
 	fmt.Println("Type \"help\" for more information")
 
 	h.r = repl.NewRepl(h)
